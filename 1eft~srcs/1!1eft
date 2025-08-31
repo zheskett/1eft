@@ -1,1 +1,1 @@
-def dt start %s ret 1$ %e
+def dect start %s ret @d@$ %e

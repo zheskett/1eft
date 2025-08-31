@@ -7,13 +7,17 @@ A programming language designed exclusively for the left hand on a QWERTY keyboa
 All characters inside the 1eft language must be a character that is typed with the left hand while touch typing on a QWERTY keyboard (including numbers). The only exception to this rule is within a comment or string literal.
 ![image](https://github.com/user-attachments/assets/6c3abb7d-ddf4-4bf5-85a3-7f86a844b8f5)
 
+## Numbers
+
+The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. Since "0" is not allowed, the "@" symbol acts as a 0. The numbers 6-9 are represented as a-d respectively (6 is a, 7 is b, etc.). To write a number, the number must start with the prefix @d. Example: The number 1234567890 is ```@d12345abcd@```
+
 ## Keywords
 
 | Keyword | Definition | Example |
 |:-|:---|:---|
-| **dt** | Decimal Type (32-bit Integer) | ```dt dec eqs 44$``` |
-| **ety** | Empty (Like void in C) | See below |
-| **def** | Define a function | ```def ety stare dt dec %s exec set dec eexec~ %e```|
+| **dect** | Decimal Type (32-bit Integer) | ```dect dec eqs 44$``` |
+| **v@!d** | Void (Like void in C) | See below |
+| **def** | Define a function | ```def ety stare dect dec %s exec set dec eexec~ %e```|
 | **ret** | Return a value from a function | ```ret 15$``` |
 | **exec** | Execute Function | ```exec set1 `Hello World` eexec$```|
 | **eexec** | End Argument List for Function | See above |

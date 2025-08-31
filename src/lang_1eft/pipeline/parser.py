@@ -5,7 +5,9 @@ import rich
 
 
 class Parser:
-    def __init__(self, grammar_file: Path = Path("grammar/grammar.lark")) -> None:
+    def __init__(
+        self, grammar_file: Path = Path("src/lang_1eft/pipeline/grammar.lark")
+    ) -> None:
         print(f"Loading grammar from {grammar_file.resolve()}")
         with grammar_file.open("r") as gf:
             grammar = gf.read()

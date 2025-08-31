@@ -1,0 +1,59 @@
+from typing import Any
+from lark import Token, Transformer
+
+import lang_1eft.pipeline.ast_definitions as ast
+from lang_1eft.pipeline.ast_util import *
+
+
+class ASTConstructor(Transformer):
+    def expr(self, items: list[Any]) -> ast.Expression:
+        assert len(items) == 1
+        assert isinstance(items[0], ast.Expression)
+        return items[0]
+
+    def ret_stmt(self, items: list[Any]) -> ast.Return:
+        assert len(items) == 1
+        assert isinstance(items[0], ast.Expression)
+        return ast.Return(items[0].line, items[0].column, items[0])
+
+    def void_type(self, items: list[Any]) -> ast.VoidType:
+        assert len(items) == 1
+        assert isinstance(items[0], Token)
+        return ast.VoidType(items[0].line, items[0].column)
+
+    def decimal_type(self, items: list[Any]) -> ast.DecimalType:
+        assert len(items) == 1
+        assert isinstance(items[0], Token)
+        return ast.DecimalType(items[0].line, items[0].column)
+
+    def LITERAL(self, item: Token) -> ast.Literal:
+        return ast.Literal(item.line, item.column, translate_integer(item.value))
+
+    def IDENTIFIER(self, item: Token) -> ast.Identifier:
+        return ast.Identifier(item.line, item.column, item.value)
+
+    def block(self, items: list[Any]) -> ast.Block:
+        statements = items[1:-1]
+        assert all(isinstance(i, ast.Statement) for i in statements)
+        assert isinstance(items[0], Token)
+        assert isinstance(items[-1], Token)
+        return ast.Block(items[0].line, items[0].column, statements)
+
+    def function_def(self, items: list[Any]) -> ast.FunctionDef:
+        assert len(items) >= 4
+        assert isinstance(items[0], Token)
+        assert isinstance(items[1], ast.Type)
+        assert isinstance(items[2], ast.Identifier)
+        assert isinstance(items[-1], ast.Block)
+        return ast.FunctionDef(
+            items[0].line,
+            items[0].column,
+            items[1],
+            items[2],
+            items[-1],
+        )
+
+    def start(self, items: list[Any]) -> ast.Program:
+        assert len(items) >= 1
+        assert all(isinstance(i, ast.FunctionDef) for i in items)
+        return ast.Program(items[0].line, items[0].column, items)
