@@ -36,7 +36,7 @@ def get_llvm_type(type_node: Type | type[Type]) -> ir.Type:
                 f"Unknown type: {type(type_node)}", type_node.line, type_node.column
             )
         else:
-            error_out(f"Unknown type: {type_node}")
+            error_out(f"Unknown type: {type_node}", 1, 1)
 
 
 def create_global_string(
