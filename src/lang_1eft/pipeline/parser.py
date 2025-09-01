@@ -26,6 +26,6 @@ class Parser:
 
 if __name__ == "__main__":
     parser = Parser()
-    with Path("1eft~srcs/2!1eft").open("r") as f:
+    with Path("1eft~srcs/3!1eft").open("r") as f:
         tree = parser.parse(f.read())
     rich.print(tree)

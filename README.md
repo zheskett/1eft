@@ -40,5 +40,6 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 
 | Function | Usage | Example |
 |:-|:---|:---|
-| **wr1te** | Set (print) a literal or variable | ```exec wr1te 15 eexec$```|
-| **wr1te1** | Set (print) a literal or variable with a new line character at the end | ```exec wr1te1 `Hello World` eexec$``` |
+| **wr1te** | Print a string literal | ```exec wr1te `abc` eexec$```|
+| **wr1te1** | Print a string literal with a new line character at the end | ```exec wr1te1 `Hello World` eexec$``` |
+| **wr1ted** | Print a decimal type (literal or variable) | ```eexec wr1ted 15 eexec$```|

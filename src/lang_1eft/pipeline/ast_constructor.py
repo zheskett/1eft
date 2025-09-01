@@ -32,6 +32,13 @@ class ASTConstructor(Transformer):
     def STRING(self, item: Token) -> ast.StringLiteral:
         # Remove the backticks
         value = item.value[1:-1]
+        # replace escape characters
+        value = (
+            value.replace(r"\n", "\n")
+            .replace(r"\t", "\t")
+            .replace(r"\`", "`")
+            .replace(r"\\", "\\")
+        )
         return ast.StringLiteral(item.line, item.column, value)
 
     def IDENTIFIER(self, item: Token) -> ast.Identifier:

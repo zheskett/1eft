@@ -2,6 +2,7 @@ import llvmlite.binding as llvm
 import llvmlite.ir as ir
 
 from lang_1eft.codegen.codegen_util import *
+from lang_1eft.codegen.predef_functions import *
 from lang_1eft.pipeline.ast_definitions import *
 
 
@@ -30,8 +31,7 @@ class ModuleBuilder:
         self.module.triple = self.triple
         self.module.data_layout = self.machine.target_data
 
-        add_wr1te_function(self.module)
-        add_wr1te1_function(self.module)
+        add_all_predef_functions(self.module)
         for func in self.ast.functions:
             self.build_function(func)
 
@@ -72,14 +72,11 @@ class ModuleBuilder:
 
     def build_expression(self, builder: ir.IRBuilder, expr: Expression) -> ir.Value:
         if isinstance(expr, DecimalLiteral):
-            return ir.Constant(ir.IntType(32), expr.value)
+            return ir.Constant(TYPE_MAP[DecimalType], expr.value)
+
         elif isinstance(expr, StringLiteral):
             string = create_global_string(builder.module, expr.value)
-            return builder.gep(
-                string,
-                [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0)],
-                inbounds=True,
-            )
+            return builder.gep(string, [ZERO, ZERO], inbounds=True)
 
         elif isinstance(expr, Identifier):
             error_out(f"Not implemented: Identifiers", expr.line, expr.column)
@@ -103,7 +100,6 @@ class ModuleBuilder:
                 )
 
             arg_values = [self.build_expression(builder, arg) for arg in expr.arguments]
-            print(arg_values)
             return builder.call(func, arg_values, name=f"call_{func_name}")
 
         elif isinstance(expr, VarDeclStatement):
