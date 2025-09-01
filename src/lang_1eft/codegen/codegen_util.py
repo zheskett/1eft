@@ -31,7 +31,12 @@ def get_llvm_type(type_node: Type | type[Type]) -> ir.Type:
     if ir_type is not None:
         return ir_type
     else:
-        error_out(f"Unknown type: {type(type_node)}", type_node.line, type_node.column)
+        if isinstance(type_node, Type):
+            error_out(
+                f"Unknown type: {type(type_node)}", type_node.line, type_node.column
+            )
+        else:
+            error_out(f"Unknown type: {type_node}")
 
 
 def create_global_string(
