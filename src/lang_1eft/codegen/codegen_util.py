@@ -4,10 +4,6 @@ import llvmlite.ir as ir
 
 from lang_1eft.pipeline.ast_definitions import *
 
-TYPE_MAP: dict[Type, ir.Type] = {
-    VoidType: ir.VoidType,
-    DecimalType: ir.IntType(32),
-}
 
 ZERO: ir.Constant = ir.Constant(ir.IntType(32), 0)
 
@@ -24,10 +20,16 @@ def generate_llvm_machine(triple: str) -> llvm.TargetMachine:
     return target_machine
 
 
-def get_llvm_type(type_node: Type) -> ir.Type:
-    ir_type = TYPE_MAP.get(type(type_node))
+def get_llvm_type(type_node: Type | type[Type]) -> ir.Type:
+    ir_type = None
+
+    if isinstance(type_node, VoidType) or type_node is VoidType:
+        ir_type = ir.VoidType()
+    elif isinstance(type_node, DecimalType) or type_node is DecimalType:
+        ir_type = ir.IntType(32)
+
     if ir_type is not None:
-        return ir_type()
+        return ir_type
     else:
         error_out(f"Unknown type: {type(type_node)}", type_node.line, type_node.column)
 

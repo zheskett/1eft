@@ -10,7 +10,7 @@ def wrap_main_function(module: ir.Module) -> None:
     for func in module.functions:
         if (
             func.name == "start"
-            and func.function_type.return_type == TYPE_MAP[DecimalType]
+            and func.function_type.return_type == get_llvm_type(DecimalType)
             and len(func.args) == 0
         ):
             start_func = func
@@ -39,7 +39,7 @@ def add_wr1te_function(module: ir.Module) -> ir.Function:
 
     wri1te = ir.Function(
         module,
-        ir.FunctionType(TYPE_MAP[VoidType], [ir.IntType(8).as_pointer()]),
+        ir.FunctionType(get_llvm_type(VoidType), [ir.IntType(8).as_pointer()]),
         name="wr1te",
     )
     block = wri1te.append_basic_block(name="entry")
@@ -56,7 +56,7 @@ def add_wr1te1_function(module: ir.Module) -> ir.Function:
     puts_func = get_puts_function(module)
     wri1te1 = ir.Function(
         module,
-        ir.FunctionType(TYPE_MAP[VoidType], [ir.IntType(8).as_pointer()]),
+        ir.FunctionType(get_llvm_type(VoidType), [ir.IntType(8).as_pointer()]),
         name="wr1te1",
     )
     block = wri1te1.append_basic_block(name="entry")
@@ -72,7 +72,7 @@ def add_wr1ted_function(module: ir.Module) -> ir.Function:
 
     wri1ted = ir.Function(
         module,
-        ir.FunctionType(TYPE_MAP[VoidType], [TYPE_MAP[DecimalType]]),
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(DecimalType)]),
         name="wr1ted",
     )
     block = wri1ted.append_basic_block(name="entry")

@@ -72,7 +72,7 @@ class ModuleBuilder:
 
     def build_expression(self, builder: ir.IRBuilder, expr: Expression) -> ir.Value:
         if isinstance(expr, DecimalLiteral):
-            return ir.Constant(TYPE_MAP[DecimalType], expr.value)
+            return ir.Constant(get_llvm_type(DecimalType), expr.value)
 
         elif isinstance(expr, StringLiteral):
             string = create_global_string(builder.module, expr.value)
