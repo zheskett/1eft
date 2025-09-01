@@ -29,7 +29,7 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 | **``** | String Literal (Like "" in C) |
 | **$** | End Line (Like ";" in C) |
 | **%s** | Start Scope (Like "{" in C) |
-| **%e** | End Scope (Like "}" in C) |
+| **!s** | End Scope (Like "}" in C) |
 | **a** | Addition |
 | **s** | Subtraction |
 | **t** | Times (Multiplication) |

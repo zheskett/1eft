@@ -52,7 +52,7 @@ expr_stmt: expr _LINE_END
 ret_stmt: "ret" expr _LINE_END
 
 ?statement: ret_stmt | expr_stmt | var_decl_stmt
-!block: "%s" (statement)* "%e"
+!block: "%s" (statement)* "!s"
 !function_def: "def" type IDENTIFIER params block
 
 start: function_def+
