@@ -1,48 +1,65 @@
 from pathlib import Path
-
 from typing import Any
+from typing_extensions import Annotated
+
 import rich
 from rich.tree import Tree
 import typer
-from lark.tree import pydot__tree_to_png
+
 
 from lang_1eft.pipeline.parser import Parser
 from lang_1eft.pipeline.ast_constructor import ASTConstructor
 from lang_1eft.pipeline.ast_definitions import *
 
-app = typer.Typer()
+from lang_1eft.codegen.module_builder import ModuleBuilder
+from lang_1eft.codegen.file_emitter import emit_files
 
 
-@app.command(help="Run a 1eft source file")
-def run():
-    rich.print("[yellow]Warning:[/yellow] Run functionality not yet implemented")
-
-
-@app.command(help="Compile a 1eft source file to an output file")
-def compile(input: Path, output: Path = Path("1eft.out")) -> None:
-    if not input.exists():
-        rich.print(f"[red]Error:[/red] Input file {input} does not exist")
+def compile(
+    input_path: Annotated[Path, typer.Argument(help="The 1eft file to compile")],
+    output_path: Annotated[
+        Path, typer.Argument(help="The output executable file")
+    ] = Path("1eft_out"),
+    asm: Annotated[bool, typer.Option(help="Output assembly code only")] = False,
+    verbose: Annotated[bool, typer.Option(help="Enable verbose output")] = False,
+) -> None:
+    """
+    Compile a 1eft source file to an executable.
+    """
+    if not input_path.exists():
+        rich.print(f"[red]Error:[/red] Input file {input_path} does not exist")
         raise typer.Exit(code=1)
 
-    with input.open("r") as f:
+    with input_path.open("r") as f:
         code = f.read()
 
     parser = Parser()
     parse_tree = parser.parse(code)
 
-    try:
-        pydot__tree_to_png(parse_tree, str(input.with_suffix(".png")), rankdir="TB")
-    except:
-        rich.print("[yellow]Warning:[/yellow] Could not generate parse tree image")
+    # try:
+    #     pydot__tree_to_png(parse_tree, str(input.with_suffix(".png")), rankdir="TB")
+    # except:
+    #     rich.print("[yellow]Warning:[/yellow] Could not generate parse tree image")
 
     ast = ASTConstructor().transform(parse_tree)
     assert isinstance(ast, Program)
-    rich.print(make_tree(ast))
+    if verbose:
+        rich.print(make_tree(ast))
+
+    module_builder = ModuleBuilder(ast, asm=asm, verbose=verbose)
+    module_builder.build()
+    assert module_builder.module is not None
+
+    if verbose:
+        rich.print(f"[bold]Generated LLVM IR:[/bold]\n{module_builder.module}")
+
+    emit_files(module_builder, output_path)
+    rich.print(f"[green]Success:[/green] Output written to {output_path}")
 
 
 def make_tree(ast: Any) -> Tree:
     tree = Tree(
-        f"{type(ast).__name__}: [i]{getattr(ast, 'line', '')} {getattr(ast, 'column', '')}[/i]"
+        f"{type(ast).__name__}: [yellow]{getattr(ast, 'line', '')} {getattr(ast, 'column', '')}[/yellow]"
     )
     if isinstance(ast, ASTNode):
         for field, value in ast.__dict__.items():
@@ -59,7 +76,7 @@ def make_tree(ast: Any) -> Tree:
 
 
 def main():
-    app()
+    typer.run(compile)
 
 
 if __name__ == "__main__":
