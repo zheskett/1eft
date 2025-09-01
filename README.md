@@ -19,7 +19,7 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 | **v@!d** | Void (Like void in C) | See below |
 | **def** | Define a function | ```def ety stare dect dec %s exec set dec eexec~ %e```|
 | **ret** | Return a value from a function | ```ret 15$``` |
-| **exec** | Execute Function | ```exec set1 `Hello World` eexec$```|
+| **exec** | Execute Function | ```exec wr1te1 `Hello World` eexec$```|
 | **eexec** | End Argument List for Function | See above |
 
 ## Punctuators
@@ -40,5 +40,5 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 
 | Function | Usage | Example |
 |:-|:---|:---|
-| **set** | Set (print) a literal or variable | ```exec set 15 eexec$```|
-| **set1** | Set (print) a literal or variable with a new line character at the end | ```exec set1 `Hello World` eexec$``` |
+| **wr1te** | Set (print) a literal or variable | ```exec wr1te 15 eexec$```|
+| **wr1te1** | Set (print) a literal or variable with a new line character at the end | ```exec wr1te1 `Hello World` eexec$``` |

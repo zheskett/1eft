@@ -22,6 +22,7 @@ def compile(
     ] = Path("1eft_out"),
     asm: Annotated[bool, typer.Option(help="Output assembly code only")] = False,
     verbose: Annotated[bool, typer.Option(help="Enable verbose output")] = False,
+    build: Annotated[bool, typer.Option(help="Build the project")] = True,
 ) -> None:
     """
     Compile a 1eft source file to an executable.
@@ -46,15 +47,16 @@ def compile(
     if verbose:
         rich.print(make_tree(ast))
 
-    module_builder = ModuleBuilder(ast, asm=asm, verbose=verbose)
-    module_builder.build()
-    assert module_builder.module is not None
+    if build:
+        module_builder = ModuleBuilder(ast, asm=asm, verbose=verbose)
+        module_builder.build()
+        assert module_builder.module is not None
 
-    if verbose:
-        rich.print(f"[bold]Generated LLVM IR:[/bold]\n{module_builder.module}")
+        if verbose:
+            rich.print(f"[bold]Generated LLVM IR:[/bold]\n{module_builder.module}")
 
-    emit_files(module_builder, output_path)
-    rich.print(f"[green]Success:[/green] Output written to {output_path}")
+        emit_files(module_builder, output_path)
+        rich.print(f"[green]Success:[/green] Output written to {output_path}")
 
 
 def make_tree(ast: Any) -> Tree:

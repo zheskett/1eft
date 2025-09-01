@@ -32,6 +32,21 @@ class Return(Statement):
         self.value = value
 
 
+class ExpressionStatement(Statement):
+    """ExpressionStatement represents a statement consisting of a single expression.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        expression : `Expression`
+    """
+
+    def __init__(self, line: int, column: int, expression: Expression) -> None:
+        super().__init__(line, column)
+        self.expression = expression
+
+
 class Type(ASTNode):
     def __init__(self, line: int, column: int) -> None:
         super().__init__(line, column)
@@ -47,8 +62,23 @@ class DecimalType(Type):
         super().__init__(line, column)
 
 
-class Literal(Expression):
-    """Literal represents an integer literal.
+class StringLiteral(Expression):
+    """StringLiteral represents a string literal value.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        value : `str`
+    """
+
+    def __init__(self, line: int, column: int, value: str) -> None:
+        super().__init__(line, column)
+        self.value = value
+
+
+class DecimalLiteral(Expression):
+    """Literal represents a literal value.
 
     Parameters
     ----------
@@ -77,6 +107,73 @@ class Identifier(ASTNode):
         self.name = name
 
 
+class Exec(Expression):
+    """Exec represents an exec expression.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        identifier : `Identifier`
+        arguments : `list[Expression]`
+    """
+
+    def __init__(
+        self,
+        line: int,
+        column: int,
+        identifier: Identifier,
+        arguments: list[Expression],
+    ) -> None:
+        super().__init__(line, column)
+        assert isinstance(identifier, Identifier)
+        self.identifier = identifier
+        assert all(isinstance(arg, Expression) for arg in arguments)
+        self.arguments = arguments
+
+
+class VarDeclStatement(Statement):
+    """VarDeclStatement represents a variable declaration statement.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        type : `Type`
+        identifier : `Identifier`
+    """
+
+    def __init__(
+        self, line: int, column: int, type: Type, identifier: Identifier
+    ) -> None:
+        super().__init__(line, column)
+        assert isinstance(type, Type)
+        self.type = type
+        assert isinstance(identifier, Identifier)
+        self.identifier = identifier
+
+
+class Param(ASTNode):
+    """Param represents a function parameter.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        type : `Type`
+        identifier : `Identifier`
+    """
+
+    def __init__(
+        self, line: int, column: int, type: Type, identifier: Identifier
+    ) -> None:
+        super().__init__(line, column)
+        assert isinstance(type, Type)
+        self.type = type
+        assert isinstance(identifier, Identifier)
+        self.identifier = identifier
+
+
 class Block(ASTNode):
     """Block represents a block of statements.
 
@@ -102,17 +199,26 @@ class FunctionDef(ASTNode):
         column : `int`
         type : `Type`
         identifier : `Identifier`
+        parameters : `list[Param]`
         body : `Block`
     """
 
     def __init__(
-        self, line: int, column: int, type: Type, identifier: Identifier, body: Block
+        self,
+        line: int,
+        column: int,
+        type: Type,
+        identifier: Identifier,
+        parameters: list[Param],
+        body: Block,
     ) -> None:
         super().__init__(line, column)
         assert isinstance(type, Type)
         self.type = type
         assert isinstance(identifier, Identifier)
         self.identifier = identifier
+        assert all(isinstance(p, Param) for p in parameters)
+        self.parameters = parameters
         assert isinstance(body, Block)
         self.body = body
 

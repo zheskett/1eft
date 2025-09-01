@@ -26,11 +26,34 @@ class ASTConstructor(Transformer):
         assert isinstance(items[0], Token)
         return ast.DecimalType(items[0].line, items[0].column)
 
-    def LITERAL(self, item: Token) -> ast.Literal:
-        return ast.Literal(item.line, item.column, translate_integer(item.value))
+    def INTEGER(self, item: Token) -> ast.DecimalLiteral:
+        return ast.DecimalLiteral(item.line, item.column, translate_integer(item.value))
+
+    def STRING(self, item: Token) -> ast.StringLiteral:
+        # Remove the backticks
+        value = item.value[1:-1]
+        return ast.StringLiteral(item.line, item.column, value)
 
     def IDENTIFIER(self, item: Token) -> ast.Identifier:
         return ast.Identifier(item.line, item.column, item.value)
+
+    def exec_expr(self, items: list[Any]) -> ast.Exec:
+        assert len(items) >= 1
+        assert isinstance(items[0], ast.Identifier)
+        if len(items) == 1:
+            return ast.Exec(items[0].line, items[0].column, items[0], [])
+
+        assert all(isinstance(i, ast.Expression) for i in items[1:])
+        return ast.Exec(items[0].line, items[0].column, items[0], items[1:])
+
+    def expr_stmt(self, items: list[Any]) -> ast.ExpressionStatement:
+        assert len(items) == 1
+        assert isinstance(items[0], ast.Expression)
+        return ast.ExpressionStatement(items[0].line, items[0].column, items[0])
+
+    def params(self, items: list[Any]) -> list[ast.Param]:
+        assert all(isinstance(i, ast.Param) for i in items)
+        return items
 
     def block(self, items: list[Any]) -> ast.Block:
         statements = items[1:-1]
@@ -40,17 +63,20 @@ class ASTConstructor(Transformer):
         return ast.Block(items[0].line, items[0].column, statements)
 
     def function_def(self, items: list[Any]) -> ast.FunctionDef:
-        assert len(items) >= 4
+        assert len(items) == 5
         assert isinstance(items[0], Token)
         assert isinstance(items[1], ast.Type)
         assert isinstance(items[2], ast.Identifier)
-        assert isinstance(items[-1], ast.Block)
+        assert isinstance(items[3], list)
+        assert all(isinstance(p, ast.Param) for p in items[3])
+        assert isinstance(items[4], ast.Block)
         return ast.FunctionDef(
             items[0].line,
             items[0].column,
             items[1],
             items[2],
-            items[-1],
+            items[3],
+            items[4],
         )
 
     def start(self, items: list[Any]) -> ast.Program:

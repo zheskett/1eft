@@ -2,6 +2,7 @@
 
 // Building blocks
 
+_LINE_END: "$"
 _NUMBER_START: "@d"
 DIGIT: "1".."5"
 DEC_DIGIT: "1".."5" | "a".."d" | "@"
@@ -36,14 +37,23 @@ IDENTIFIER: CNAME
 ?type: void_type | decimal_type
 
 // Expressions
-LITERAL: INTEGER
-expr: LITERAL
+STRING: "`" /.*?/ "`"
+?literal: INTEGER | STRING
 
-// Keywords
-ret_stmt: "ret" expr "$"
-?statement: ret_stmt
+// Expressions:
+expr: literal | IDENTIFIER | exec_expr
+exec_expr: "exec" IDENTIFIER expr* "eexec"
+var_decl: type IDENTIFIER
+params: (var_decl)*
+var_decl_stmt: var_decl _LINE_END
+expr_stmt: expr _LINE_END
+
+// Statements
+ret_stmt: "ret" expr _LINE_END
+
+?statement: ret_stmt | expr_stmt | var_decl_stmt
 !block: "%s" (statement)* "%e"
-!function_def: "def" type IDENTIFIER (type IDENTIFIER)* block
+!function_def: "def" type IDENTIFIER params block
 
 start: function_def+
 

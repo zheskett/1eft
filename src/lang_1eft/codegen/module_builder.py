@@ -30,6 +30,8 @@ class ModuleBuilder:
         self.module.triple = self.triple
         self.module.data_layout = self.machine.target_data
 
+        add_wr1te_function(self.module)
+        add_wr1te1_function(self.module)
         for func in self.ast.functions:
             self.build_function(func)
 
@@ -59,14 +61,53 @@ class ModuleBuilder:
                 )
 
     def build_statement(self, builder: ir.IRBuilder, stmt: Statement) -> None:
-        if isinstance(stmt, Return):
+        if isinstance(stmt, ExpressionStatement):
+            self.build_expression(builder, stmt.expression)
+
+        elif isinstance(stmt, Return):
             ret_val = self.build_expression(builder, stmt.value)
             builder.ret(ret_val)
         else:
             error_out(f"Unknown statement: {type(stmt)}", stmt.line, stmt.column)
 
     def build_expression(self, builder: ir.IRBuilder, expr: Expression) -> ir.Value:
-        if isinstance(expr, Literal):
+        if isinstance(expr, DecimalLiteral):
             return ir.Constant(ir.IntType(32), expr.value)
+        elif isinstance(expr, StringLiteral):
+            string = create_global_string(builder.module, expr.value)
+            return builder.gep(
+                string,
+                [ir.Constant(ir.IntType(32), 0), ir.Constant(ir.IntType(32), 0)],
+                inbounds=True,
+            )
+
+        elif isinstance(expr, Identifier):
+            error_out(f"Not implemented: Identifiers", expr.line, expr.column)
+
+        elif isinstance(expr, Exec):
+            func_name = expr.identifier.name
+            func = None
+            try:
+                func = builder.module.get_global(func_name)
+            except KeyError:
+                func = None
+
+            if func is None or not isinstance(func, ir.Function):
+                error_out(f"Function '{func_name}' not found", expr.line, expr.column)
+
+            if len(expr.arguments) != len(func.args):
+                error_out(
+                    f"Function '{func_name}' expects {len(func.args)} arguments, got {len(expr.arguments)}",
+                    expr.line,
+                    expr.column,
+                )
+
+            arg_values = [self.build_expression(builder, arg) for arg in expr.arguments]
+            print(arg_values)
+            return builder.call(func, arg_values, name=f"call_{func_name}")
+
+        elif isinstance(expr, VarDeclStatement):
+            error_out(f"Not implemented: Variable Declarations", expr.line, expr.column)
+
         else:
             error_out(f"Unknown expression: {type(expr)}", expr.line, expr.column)
