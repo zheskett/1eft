@@ -20,7 +20,7 @@ def generate_llvm_machine(triple: str, opt: int) -> llvm.TargetMachine:
     return target_machine
 
 
-def get_llvm_type(type_node: Type | type[Type]) -> ir.Type:
+def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Type:
     ir_type = None
 
     if isinstance(type_node, VoidType) or type_node is VoidType:
@@ -33,10 +33,15 @@ def get_llvm_type(type_node: Type | type[Type]) -> ir.Type:
     else:
         if isinstance(type_node, Type):
             error_out(
-                f"Unknown type: {type(type_node)}", type_node.line, type_node.column
+                f"Unknown type: {type(type_node)}",
+                type_node.line,
+                type_node.column,
+                do_raise,
             )
+            exit(1)
         else:
-            error_out(f"Unknown type: {type_node}", 1, 1)
+            error_out(f"Unknown type: {type_node}", 1, 1, do_raise)
+            exit(1)
 
 
 def create_global_string(
@@ -60,7 +65,7 @@ def create_global_string(
     global_str.global_constant = True
 
     # Set global_string to be initialized to str_const
-    global_str.initializer = str_const
+    global_str.initializer = str_const  # type: ignore
     return global_str
 
 
@@ -84,6 +89,7 @@ def get_printf_function(module: ir.Module) -> ir.Function:
         return printf_func
 
 
-def error_out(message: str, line: int, col: int) -> None:
+def error_out(message: str, line: int, col: int, do_raise: bool = False) -> None:
     rich.print(f"[red]Error:[/red] {message} at {line}:{col}")
-    raise NotImplementedError(message)
+    if do_raise:
+        raise NotImplementedError(message)

@@ -1,3 +1,4 @@
+from typing import cast
 import llvmlite.binding as llvm
 import llvmlite.ir as ir
 
@@ -31,7 +32,7 @@ class ModuleBuilder:
     def build(self) -> None:
         self.module = ir.Module(name="1eft_module")
         self.module.triple = self.triple
-        self.module.data_layout = self.machine.target_data
+        self.module.data_layout = str(self.machine.target_data)
 
         add_all_predef_functions(self.module)
         for func in self.ast.functions:
@@ -67,7 +68,7 @@ class ModuleBuilder:
             self.build_statement(builder, stmt, block_values)
 
         # Check for return statement
-        if not builder.block.is_terminated:
+        if not (cast(ir.Block, builder.block).is_terminated):
             if isinstance(func_def.type, VoidType):
                 builder.ret_void()
             else:
@@ -75,7 +76,9 @@ class ModuleBuilder:
                     "Non-v@1d function must end with a return statement",
                     func_def.line,
                     func_def.column,
+                    self.verbose,
                 )
+                exit(1)
 
     def build_statement(
         self, builder: ir.IRBuilder, stmt: Statement, block_values: dict[str, ir.Value]
@@ -93,7 +96,9 @@ class ModuleBuilder:
                     f"Variable '{stmt.identifier.name}' already declared",
                     stmt.identifier.line,
                     stmt.identifier.column,
+                    self.verbose,
                 )
+                exit(1)
 
             value = builder.alloca(get_llvm_type(stmt.type), name=stmt.identifier.name)
             block_values[stmt.identifier.name] = value
@@ -104,13 +109,18 @@ class ModuleBuilder:
                     f"Variable '{stmt.identifier.name}' not declared in this scope",
                     stmt.identifier.line,
                     stmt.identifier.column,
+                    self.verbose,
                 )
+                exit(1)
 
             assign_val = self.build_expression(builder, stmt.value, block_values)
             builder.store(assign_val, block_values[stmt.identifier.name])
 
         else:
-            error_out(f"Unknown statement: {type(stmt)}", stmt.line, stmt.column)
+            error_out(
+                f"Unknown statement: {type(stmt)}", stmt.line, stmt.column, self.verbose
+            )
+            exit(1)
 
     def build_expression(
         self, builder: ir.IRBuilder, expr: Expression, block_values: dict[str, ir.Value]
@@ -128,28 +138,43 @@ class ModuleBuilder:
                     f"Variable '{expr.identifier.name}' not declared in this scope",
                     expr.identifier.line,
                     expr.identifier.column,
+                    self.verbose,
                 )
+                exit(1)
             var = block_values[expr.identifier.name]
 
             return builder.load(var, name=expr.identifier.name)
 
         elif isinstance(expr, Exec):
             func_name = expr.identifier.name
-            func = None
             try:
                 func = builder.module.get_global(func_name)
             except KeyError:
-                func = None
+                error_out(
+                    f"Function '{func_name}' not found",
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+                exit(1)
 
-            if func is None or not isinstance(func, ir.Function):
-                error_out(f"Function '{func_name}' not found", expr.line, expr.column)
+            if not isinstance(func, ir.Function):
+                error_out(
+                    f"'{func_name}' is not a function",
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+                exit(1)
 
             if len(expr.arguments) != len(func.args):
                 error_out(
                     f"Function '{func_name}' expects {len(func.args)} arguments, got {len(expr.arguments)}",
                     expr.line,
                     expr.column,
+                    self.verbose,
                 )
+                exit(1)
 
             arg_values = [
                 self.build_expression(builder, arg, block_values)
@@ -158,4 +183,10 @@ class ModuleBuilder:
             return builder.call(func, arg_values, name=f"call_{func_name}")
 
         else:
-            error_out(f"Unknown expression: {type(expr)}", expr.line, expr.column)
+            error_out(
+                f"Unknown expression: {type(expr)}",
+                expr.line,
+                expr.column,
+                self.verbose,
+            )
+            exit(1)

@@ -19,25 +19,36 @@ class ASTConstructor(Transformer):
     def void_type(self, items: list[Any]) -> ast.VoidType:
         assert len(items) == 1
         assert isinstance(items[0], Token)
-        return ast.VoidType(items[0].line, items[0].column)
+        return ast.VoidType(
+            items[0].line or 0,
+            items[0].column or 0,
+        )
 
     def decimal_type(self, items: list[Any]) -> ast.DecimalType:
         assert len(items) == 1
         assert isinstance(items[0], Token)
-        return ast.DecimalType(items[0].line, items[0].column)
+        return ast.DecimalType(
+            items[0].line or 0,
+            items[0].column or 0,
+        )
 
     def INTEGER(self, item: Token) -> ast.DecimalLiteral:
-        return ast.DecimalLiteral(item.line, item.column, translate_integer(item.value))
+        return ast.DecimalLiteral(
+            item.line if item.line else 0,
+            item.column if item.column else 0,
+            translate_integer(item.value),
+        )
 
     def STRING(self, item: Token) -> ast.StringLiteral:
+        assert isinstance(item.value, str)
         # Remove the backticks
         value = item.value[1:-1]
         # replace escape characters
         value = value.replace(r"\n", "\n").replace(r"\t", "\t").replace(r"\\", "\\")
-        return ast.StringLiteral(item.line, item.column, value)
+        return ast.StringLiteral(item.line or 0, item.column or 0, value)
 
     def IDENTIFIER(self, item: Token) -> ast.Identifier:
-        return ast.Identifier(item.line, item.column, item.value)
+        return ast.Identifier(item.line or 0, item.column or 0, item.value)
 
     def identifier_expr(self, items: list[Any]) -> ast.IdentifierExpr:
         assert len(items) == 1
@@ -86,7 +97,11 @@ class ASTConstructor(Transformer):
         assert all(isinstance(i, ast.Statement) for i in statements)
         assert isinstance(items[0], Token)
         assert isinstance(items[-1], Token)
-        return ast.Block(items[0].line, items[0].column, statements)
+        return ast.Block(
+            items[0].line or 0,
+            items[0].column or 0,
+            statements,
+        )
 
     def function_def(self, items: list[Any]) -> ast.FunctionDef:
         assert len(items) == 5
@@ -97,8 +112,8 @@ class ASTConstructor(Transformer):
         assert all(isinstance(p, ast.Param) for p in items[3])
         assert isinstance(items[4], ast.Block)
         return ast.FunctionDef(
-            items[0].line,
-            items[0].column,
+            items[0].line or 0,
+            items[0].column or 0,
             items[1],
             items[2],
             items[3],

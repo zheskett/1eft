@@ -18,6 +18,7 @@ def wrap_main_function(module: ir.Module) -> None:
 
     if start_func is None:
         error_out("No valid 'start' function found", 1, 1)
+        exit(1)
 
     func_type = ir.FunctionType(ir.IntType(32), [])
     func = ir.Function(module, func_type, name="main")
