@@ -6,9 +6,12 @@ import rich
 
 class Parser:
     def __init__(
-        self, grammar_file: Path = Path("src/lang_1eft/pipeline/grammar.lark")
+        self,
+        grammar_file: Path = Path("src/lang_1eft/pipeline/grammar.lark"),
+        verbose: bool = False,
     ) -> None:
-        print(f"Loading grammar from {grammar_file.resolve()}")
+        if verbose:
+            rich.print(f"Loading grammar from {grammar_file.resolve()}")
         with grammar_file.open("r") as gf:
             grammar = gf.read()
 

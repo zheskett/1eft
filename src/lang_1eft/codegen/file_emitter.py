@@ -31,7 +31,7 @@ def optimize(llvm_ir: llvm.ModuleRef, module_builder: ModuleBuilder) -> None:
     pm.run(llvm_ir)
 
     if module_builder.verbose:
-        rich.print("Optimized LLVM IR:")
+        rich.print("LLVM IR:")
         rich.print(llvm_ir)
 
 
@@ -48,12 +48,16 @@ def emit_files(module_builder: ModuleBuilder, output_path: Path) -> None:
         output_path.with_suffix(".s").write_text(
             module_builder.machine.emit_assembly(llvm_ir)
         )
+        rich.print(
+            f"[green]Success:[/green] Output written to {output_path.with_suffix('.s')}"
+        )
     else:
         output_path.with_suffix(".o").write_bytes(
             module_builder.machine.emit_object(llvm_ir)
         )
         link_files(output_path)
         remove_linked_object(output_path)
+        rich.print(f"[green]Success:[/green] Output written to {output_path}")
 
 
 def link_files(out_path: Path) -> None:

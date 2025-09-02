@@ -39,13 +39,8 @@ def compile(
     with input_path.open("r") as f:
         code = f.read()
 
-    parser = Parser()
+    parser = Parser(verbose=verbose)
     parse_tree = parser.parse(code)
-
-    # try:
-    #     pydot__tree_to_png(parse_tree, str(input.with_suffix(".png")), rankdir="TB")
-    # except:
-    #     rich.print("[yellow]Warning:[/yellow] Could not generate parse tree image")
 
     ast = ASTConstructor().transform(parse_tree)
     assert isinstance(ast, Program)
@@ -58,7 +53,6 @@ def compile(
         assert module_builder.module is not None
 
         emit_files(module_builder, output_path)
-        rich.print(f"[green]Success:[/green] Output written to {output_path}")
 
 
 def make_tree(ast: Any) -> Tree:
