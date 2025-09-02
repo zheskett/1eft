@@ -107,6 +107,22 @@ class Identifier(ASTNode):
         self.name = name
 
 
+class IdentifierExpr(Expression):
+    """IdentifierExpr represents an identifier expression.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        identifier : `Identifier`
+    """
+
+    def __init__(self, line: int, column: int, identifier: Identifier) -> None:
+        super().__init__(line, column)
+        assert isinstance(identifier, Identifier)
+        self.identifier = identifier
+
+
 class Exec(Expression):
     """Exec represents an exec expression.
 
@@ -151,6 +167,27 @@ class VarDeclStatement(Statement):
         self.type = type
         assert isinstance(identifier, Identifier)
         self.identifier = identifier
+
+
+class VarAssStatement(Statement):
+    """VarAssStatement represents a variable assignment statement.
+
+    Parameters
+    ----------
+        line : `int`
+        column : `int`
+        identifier : `Identifier`
+        value : `Expression`
+    """
+
+    def __init__(
+        self, line: int, column: int, identifier: Identifier, value: Expression
+    ) -> None:
+        super().__init__(line, column)
+        assert isinstance(identifier, Identifier)
+        self.identifier = identifier
+        assert isinstance(value, Expression)
+        self.value = value
 
 
 class Param(ASTNode):

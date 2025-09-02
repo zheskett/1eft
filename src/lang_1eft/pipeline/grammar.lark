@@ -3,11 +3,18 @@
 // Building blocks
 
 _LINE_END: "$"
-_NUMBER_START: "@d"
+
+_DEC_NUMBER_START: "%d"
+_DEC_NUMBER_END: "!d"
+_SCOPE_START: "%s"
+_SCOPE_END: "!s"
+_PAREN_START: "%e"
+_PAREN_END: "!e"
+
 DIGIT: "1".."5"
 DEC_DIGIT: "1".."5" | "a".."d" | "@"
 
-INTEGER: _NUMBER_START DEC_DIGIT+
+INTEGER: _DEC_NUMBER_START DEC_DIGIT+ _DEC_NUMBER_END
 
 LOWER_LETTER: "a".."g"
     | "q".."t"
@@ -29,9 +36,18 @@ CNAME: SAFE_LETTER | LETTER (LETTER | DIGIT)+
 
 IDENTIFIER: CNAME
 
+_ASSIGN_SYMBOL: "ass"
+
+_ADD_SYMBOL: "a"
+_SUB_SYMBOL: "s"
+
+_DIV_SYMBOL: "d"
+_MUL_SYMBOL: "t"
+
+
 // Types
 // The ! is used to keep track of line numbers for error reporting
-!void_type: "v@!d"
+!void_type: "v@1d"
 !decimal_type: "dect"
 
 ?type: void_type | decimal_type
@@ -41,18 +57,24 @@ STRING: "`" /.*?/ "`"
 ?literal: INTEGER | STRING
 
 // Expressions:
-expr: literal | IDENTIFIER | exec_expr
-exec_expr: "exec" IDENTIFIER expr* "eexec"
-var_decl: type IDENTIFIER
-params: (var_decl)*
-var_decl_stmt: var_decl _LINE_END
-expr_stmt: expr _LINE_END
+expr: literal | identifier_expr | exec_expr
+exec_expr: "exec" IDENTIFIER _PAREN_START expr* _PAREN_END
+identifier_expr: IDENTIFIER
+
+params: (type IDENTIFIER)*
 
 // Statements
 ret_stmt: "ret" expr _LINE_END
+var_decl_stmt: type IDENTIFIER _LINE_END
+var_ass_stmt: IDENTIFIER _ASSIGN_SYMBOL expr _LINE_END
+expr_stmt: expr _LINE_END
 
-?statement: ret_stmt | expr_stmt | var_decl_stmt
-!block: "%s" (statement)* "!s"
+?statement: ret_stmt
+    | expr_stmt
+    | var_decl_stmt
+    | var_ass_stmt
+
+!block: _SCOPE_START (statement)* _SCOPE_END
 !function_def: "def" type IDENTIFIER params block
 
 start: function_def+
