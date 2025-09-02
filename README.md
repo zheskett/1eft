@@ -15,12 +15,11 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 
 | Keyword | Definition | Example |
 |:-|:---|:---|
-| **dect** | Decimal Type (32-bit Integer) | ```dect dec eqs 44$``` |
+| **dect** | Decimal Type (32-bit Integer) | ```dect dec ass %d44!d$``` |
 | **v@1d** | Void (Like void in C) | See below |
-| **def** | Define a function | ```def ety stare dect dec %s exec set dec eexec~ %e```|
-| **ret** | Return a value from a function | ```ret 15$``` |
-| **exec** | Execute Function | ```exec wr1te1 `Hello World` eexec$```|
-| **eexec** | End Argument List for Function | See above |
+| **def** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|
+| **ret** | Return a value from a function | ```ret %d15!d$``` |
+| **exec** | Execute Function | ```exec wr1te1 %e `Hello World` !e $```|
 
 ## Punctuators
 
@@ -30,6 +29,10 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 | **$** | End Line (Like ";" in C) |
 | **%s** | Start Scope (Like "{" in C) |
 | **!s** | End Scope (Like "}" in C) |
+| **%e** | Start Expression (Like "(" in C) |
+| **!e** | End Expression (Like ")" in C) |
+| **%d** | Start Decimal |
+| **!d** | End Decimal |
 | **a** | Addition |
 | **s** | Subtraction |
 | **t** | Times (Multiplication) |
@@ -40,6 +43,6 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 
 | Function | Usage | Example |
 |:-|:---|:---|
-| **wr1te** | Print a string literal | ```exec wr1te `abc` eexec$```|
-| **wr1te1** | Print a string literal with a new line character at the end | ```exec wr1te1 `Hello World` eexec$``` |
-| **wr1ted** | Print a decimal type (literal or variable) | ```eexec wr1ted 15 eexec$```|
+| **wr1te** | Print a string literal | ```exec wr1te %e `abc` !e$```|
+| **wr1te1** | Print a string literal with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$``` |
+| **wr1ted** | Print a decimal type (literal or variable) | ```eexec wr1ted %e %d15!d$ !e```|
