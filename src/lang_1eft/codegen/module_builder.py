@@ -54,6 +54,15 @@ class ModuleBuilder:
 
         block_values: dict[str, ir.Value] = {}
 
+        # Set function parameters
+        for i, param in enumerate(func_def.parameters):
+            param_var = builder.alloca(
+                get_llvm_type(param.type), name=param.identifier.name
+            )
+            block_values[param.identifier.name] = param_var
+            builder.store(func.args[i], param_var)
+
+        # Build function body
         for stmt in func_def.body.statements:
             self.build_statement(builder, stmt, block_values)
 

@@ -71,6 +71,12 @@ class ASTConstructor(Transformer):
         assert isinstance(items[0], ast.Expression)
         return ast.ExpressionStatement(items[0].line, items[0].column, items[0])
 
+    def param(self, items: list[Any]) -> ast.Param:
+        assert len(items) == 2
+        assert isinstance(items[0], ast.Type) and not isinstance(items[0], ast.VoidType)
+        assert isinstance(items[1], ast.Identifier)
+        return ast.Param(items[0].line, items[0].column, items[0], items[1])
+
     def params(self, items: list[Any]) -> list[ast.Param]:
         assert all(isinstance(i, ast.Param) for i in items)
         return items

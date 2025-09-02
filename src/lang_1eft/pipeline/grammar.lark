@@ -61,8 +61,6 @@ expr: literal | identifier_expr | exec_expr
 exec_expr: "exec" IDENTIFIER _PAREN_START expr* _PAREN_END
 identifier_expr: IDENTIFIER
 
-params: (type IDENTIFIER)*
-
 // Statements
 ret_stmt: "ret" expr _LINE_END
 var_decl_stmt: type IDENTIFIER _LINE_END
@@ -75,6 +73,9 @@ expr_stmt: expr _LINE_END
     | var_ass_stmt
 
 !block: _SCOPE_START (statement)* _SCOPE_END
+
+param: type IDENTIFIER
+params: param*
 !function_def: "def" type IDENTIFIER params block
 
 start: function_def+
