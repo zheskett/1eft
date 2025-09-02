@@ -23,12 +23,17 @@ def compile(
     asm: Annotated[bool, typer.Option(help="Output assembly code only")] = False,
     verbose: Annotated[bool, typer.Option(help="Enable verbose output")] = False,
     build: Annotated[bool, typer.Option(help="Build the project")] = True,
+    opt: Annotated[int, typer.Option(help="Optimization level (0-3)")] = 2,
 ) -> None:
     """
     Compile a 1eft source file to an executable.
     """
     if not input_path.exists():
         rich.print(f"[red]Error:[/red] Input file {input_path} does not exist")
+        raise typer.Exit(code=1)
+
+    if not (0 <= opt <= 3):
+        rich.print(f"[red]Error:[/red] Optimization level must be between 0 and 3")
         raise typer.Exit(code=1)
 
     with input_path.open("r") as f:
@@ -48,12 +53,9 @@ def compile(
         rich.print(make_tree(ast))
 
     if build:
-        module_builder = ModuleBuilder(ast, asm=asm, verbose=verbose)
+        module_builder = ModuleBuilder(ast, asm=asm, verbose=verbose, opt=opt)
         module_builder.build()
         assert module_builder.module is not None
-
-        if verbose:
-            rich.print(f"[bold]Generated LLVM IR:[/bold]\n{module_builder.module}")
 
         emit_files(module_builder, output_path)
         rich.print(f"[green]Success:[/green] Output written to {output_path}")

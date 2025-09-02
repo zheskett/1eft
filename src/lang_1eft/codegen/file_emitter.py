@@ -7,10 +7,39 @@ import llvmlite.binding as llvm
 from lang_1eft.codegen.module_builder import ModuleBuilder
 
 
+def parse_asm(asm: str) -> llvm.ModuleRef:
+    mod = llvm.parse_assembly(asm)
+    mod.verify()
+    return mod
+
+
+def optimize(llvm_ir: llvm.ModuleRef, module_builder: ModuleBuilder) -> None:
+    pmb = llvm.create_pass_manager_builder()
+    pmb.opt_level = module_builder.opt
+
+    pm = llvm.ModulePassManager()
+    fpm = llvm.FunctionPassManager(llvm_ir)
+
+    pmb.populate(pm)
+    pmb.populate(fpm)
+
+    fpm.initialize()
+    for func in llvm_ir.functions:
+        fpm.run(func)
+    fpm.finalize()
+
+    pm.run(llvm_ir)
+
+    if module_builder.verbose:
+        rich.print("Optimized LLVM IR:")
+        rich.print(llvm_ir)
+
+
 def emit_files(module_builder: ModuleBuilder, output_path: Path) -> None:
     assert module_builder.module is not None
-    llvm_ir = llvm.parse_assembly(str(module_builder.module))
-    llvm_ir.verify()
+    llvm_ir = parse_asm(str(module_builder.module))
+
+    optimize(llvm_ir, module_builder)
 
     # Make sure output directory exists
     output_path.parent.mkdir(parents=True, exist_ok=True)

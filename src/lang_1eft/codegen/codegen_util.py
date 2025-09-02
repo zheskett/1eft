@@ -10,12 +10,12 @@ ZERO: ir.Constant = ir.Constant(ir.IntType(32), 0)
 string_numbers: dict[str, int] = {}
 
 
-def generate_llvm_machine(triple: str) -> llvm.TargetMachine:
+def generate_llvm_machine(triple: str, opt: int) -> llvm.TargetMachine:
     target = llvm.Target.from_triple(triple)
     target_machine = target.create_target_machine(
         cpu="generic",
         features="",
-        opt=0,
+        opt=2,
     )
     return target_machine
 

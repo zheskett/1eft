@@ -13,6 +13,7 @@ class ModuleBuilder:
         asm: bool = False,
         verbose: bool = False,
         triple: str | None = None,
+        opt: int = 2,
     ) -> None:
         llvm.initialize()
         llvm.initialize_native_target()
@@ -22,7 +23,8 @@ class ModuleBuilder:
         self.asm = asm
         self.verbose = verbose
         self.triple = triple if triple is not None else llvm.get_default_triple()
-        self.machine = generate_llvm_machine(self.triple)
+        self.opt = opt
+        self.machine = generate_llvm_machine(self.triple, self.opt)
 
         self.module = None
 
