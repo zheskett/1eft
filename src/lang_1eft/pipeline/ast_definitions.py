@@ -1,276 +1,130 @@
-from abc import ABC
+from dataclasses import dataclass
 
 
-class ASTNode(ABC):
-    def __init__(self, line: int, column: int) -> None:
-        self.line = line
-        self.column = column
+@dataclass(frozen=True)
+class ASTNode:
+    line: int
+    column: int
 
 
+@dataclass(frozen=True)
 class Expression(ASTNode):
-    def __init__(self, line: int, column: int) -> None:
-        super().__init__(line, column)
+    pass
 
 
+@dataclass(frozen=True)
 class Statement(ASTNode):
-    def __init__(self, line: int, column: int) -> None:
-        super().__init__(line, column)
+    pass
 
 
+@dataclass(frozen=True)
 class Return(Statement):
-    """Return represents a return statement.
+    """Return represents a return statement."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        value : `Expression`
-    """
-
-    def __init__(self, line: int, column: int, value: Expression) -> None:
-        super().__init__(line, column)
-        self.value = value
+    value: Expression
 
 
+@dataclass(frozen=True)
 class ExpressionStatement(Statement):
-    """ExpressionStatement represents a statement consisting of a single expression.
+    """ExpressionStatement represents a statement consisting of a single expression."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        expression : `Expression`
-    """
-
-    def __init__(self, line: int, column: int, expression: Expression) -> None:
-        super().__init__(line, column)
-        self.expression = expression
+    expression: Expression
 
 
+@dataclass(frozen=True)
 class Type(ASTNode):
-    def __init__(self, line: int, column: int) -> None:
-        super().__init__(line, column)
+    pass
 
 
+@dataclass(frozen=True)
 class VoidType(Type):
-    def __init__(self, line: int, column: int) -> None:
-        super().__init__(line, column)
+    pass
 
 
+@dataclass(frozen=True)
 class DecimalType(Type):
-    def __init__(self, line: int, column: int) -> None:
-        super().__init__(line, column)
+    pass
 
 
+@dataclass(frozen=True)
 class StringLiteral(Expression):
-    """StringLiteral represents a string literal value.
+    """StringLiteral represents a string literal value."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        value : `str`
-    """
-
-    def __init__(self, line: int, column: int, value: str) -> None:
-        super().__init__(line, column)
-        self.value = value
+    value: str
 
 
+@dataclass(frozen=True)
 class DecimalLiteral(Expression):
-    """Literal represents a literal value.
+    """Decimal literal represents a integer literal value."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        value : `int`
-    """
-
-    def __init__(self, line: int, column: int, value: int) -> None:
-        super().__init__(line, column)
-        self.value = value
+    value: int
 
 
+@dataclass(frozen=True)
 class Identifier(ASTNode):
-    """Identifier represents a variable or function name.
+    """Identifier represents a variable or function name."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        name : `str`
-    """
-
-    def __init__(self, line: int, column: int, name: str) -> None:
-        super().__init__(line, column)
-        self.name = name
+    name: str
 
 
+@dataclass(frozen=True)
 class IdentifierExpr(Expression):
-    """IdentifierExpr represents an identifier expression.
+    """IdentifierExpr represents an identifier expression."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        identifier : `Identifier`
-    """
-
-    def __init__(self, line: int, column: int, identifier: Identifier) -> None:
-        super().__init__(line, column)
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
+    identifier: Identifier
 
 
+@dataclass(frozen=True)
 class Exec(Expression):
-    """Exec represents an exec expression.
+    """Exec represents an exec expression."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        identifier : `Identifier`
-        arguments : `list[Expression]`
-    """
-
-    def __init__(
-        self,
-        line: int,
-        column: int,
-        identifier: Identifier,
-        arguments: list[Expression],
-    ) -> None:
-        super().__init__(line, column)
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
-        assert all(isinstance(arg, Expression) for arg in arguments)
-        self.arguments = arguments
+    identifier: Identifier
+    arguments: list[Expression]
 
 
+@dataclass(frozen=True)
 class VarDeclStatement(Statement):
-    """VarDeclStatement represents a variable declaration statement.
+    """VarDeclStatement represents a variable declaration statement."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        type : `Type`
-        identifier : `Identifier`
-    """
-
-    def __init__(
-        self, line: int, column: int, type: Type, identifier: Identifier
-    ) -> None:
-        super().__init__(line, column)
-        assert isinstance(type, Type)
-        self.type = type
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
+    type: Type
+    identifier: Identifier
 
 
+@dataclass(frozen=True)
 class VarAssStatement(Statement):
-    """VarAssStatement represents a variable assignment statement.
+    """VarAssStatement represents a variable assignment statement."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        identifier : `Identifier`
-        value : `Expression`
-    """
-
-    def __init__(
-        self, line: int, column: int, identifier: Identifier, value: Expression
-    ) -> None:
-        super().__init__(line, column)
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
-        assert isinstance(value, Expression)
-        self.value = value
+    identifier: Identifier
+    value: Expression
 
 
+@dataclass(frozen=True)
 class Param(ASTNode):
-    """Param represents a function parameter.
+    """Param represents a function parameter."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        type : `Type`
-        identifier : `Identifier`
-    """
-
-    def __init__(
-        self, line: int, column: int, type: Type, identifier: Identifier
-    ) -> None:
-        super().__init__(line, column)
-        assert isinstance(type, Type)
-        self.type = type
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
+    type: Type
+    identifier: Identifier
 
 
+@dataclass(frozen=True)
 class Block(ASTNode):
-    """Block represents a block of statements.
+    """Block represents a block of statements."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        statements : `list[Statement]`
-    """
-
-    def __init__(self, line: int, column: int, statements: list[Statement]) -> None:
-        super().__init__(line, column)
-        assert all(isinstance(s, Statement) for s in statements)
-        self.statements = statements
+    statements: list[Statement]
 
 
+@dataclass(frozen=True)
 class FunctionDef(ASTNode):
-    """FunctionDef represents a function definition.
+    """FunctionDef represents a function definition."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        type : `Type`
-        identifier : `Identifier`
-        parameters : `list[Param]`
-        body : `Block`
-    """
-
-    def __init__(
-        self,
-        line: int,
-        column: int,
-        type: Type,
-        identifier: Identifier,
-        parameters: list[Param],
-        body: Block,
-    ) -> None:
-        super().__init__(line, column)
-        assert isinstance(type, Type)
-        self.type = type
-        assert isinstance(identifier, Identifier)
-        self.identifier = identifier
-        assert all(isinstance(p, Param) for p in parameters)
-        self.parameters = parameters
-        assert isinstance(body, Block)
-        self.body = body
+    type: Type
+    identifier: Identifier
+    parameters: list[Param]
+    body: Block
 
 
+@dataclass(frozen=True)
 class Program(ASTNode):
-    """Program is the root AST node.
+    """Program is the root AST node."""
 
-    Parameters
-    ----------
-        line : `int`
-        column : `int`
-        functions : `list[FunctionDef]`
-    """
-
-    def __init__(self, line: int, column: int, functions: list[FunctionDef]) -> None:
-        super().__init__(line, column)
-        assert all(isinstance(f, FunctionDef) for f in functions)
-        self.functions = functions
+    functions: list[FunctionDef]
