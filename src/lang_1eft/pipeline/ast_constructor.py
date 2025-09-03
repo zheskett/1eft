@@ -4,13 +4,13 @@ from lark import Token, Transformer
 import lang_1eft.pipeline.ast_definitions as ast
 from lang_1eft.pipeline.ast_util import *
 
+ADD_SYMBOL = "a"
+SUB_SYMBOL = "s"
+MUL_SYMBOL = "t"
+DIV_SYMBOL = "d"
+
 
 class ASTConstructor(Transformer):
-    def expr(self, items: list[Any]) -> ast.Expression:
-        assert len(items) == 1
-        assert isinstance(items[0], ast.Expression)
-        return items[0]
-
     def ret_stmt(self, items: list[Any]) -> ast.Return:
         assert len(items) == 1
         assert isinstance(items[0], ast.Expression)
@@ -63,6 +63,55 @@ class ASTConstructor(Transformer):
 
         assert all(isinstance(i, ast.Expression) for i in items[1:])
         return ast.Exec(items[0].line, items[0].column, items[0], items[1:])
+
+    def factor(self, items: list[Any]) -> ast.Expression:
+        assert len(items) == 1
+        assert isinstance(items[0], ast.Expression)
+        return items[0]
+
+    def term(self, items: list[Any]) -> ast.Expression:
+        assert len(items) == 1 or len(items) == 3
+        assert isinstance(items[0], ast.Expression)
+        if len(items) == 1:
+            return items[0]
+        assert isinstance(items[1], Token)
+        assert items[1].value in (MUL_SYMBOL, DIV_SYMBOL)
+        assert isinstance(items[2], ast.Expression)
+        if items[1].value == MUL_SYMBOL:
+            return ast.MulExpr(
+                items[1].line or items[0].line,
+                items[1].column or items[0].column,
+                items[0],
+                items[2],
+            )
+        return ast.DivExpr(
+            items[1].line or items[0].line,
+            items[1].column or items[0].column,
+            items[0],
+            items[2],
+        )
+
+    def expr(self, items: list[Any]) -> ast.Expression:
+        assert len(items) == 1 or len(items) == 3
+        assert isinstance(items[0], ast.Expression)
+        if len(items) == 1:
+            return items[0]
+        assert isinstance(items[1], Token)
+        assert items[1].value in (ADD_SYMBOL, SUB_SYMBOL)
+        assert isinstance(items[2], ast.Expression)
+        if items[1].value == ADD_SYMBOL:
+            return ast.AddExpr(
+                items[1].line or items[0].line,
+                items[1].column or items[0].column,
+                items[0],
+                items[2],
+            )
+        return ast.SubExpr(
+            items[1].line or items[0].line,
+            items[1].column or items[0].column,
+            items[0],
+            items[2],
+        )
 
     def var_decl_stmt(self, items: list[Any]) -> ast.VarDeclStatement:
         assert len(items) == 2

@@ -38,11 +38,11 @@ IDENTIFIER: CNAME
 
 _ASSIGN_SYMBOL: "ass"
 
-_ADD_SYMBOL: "a"
-_SUB_SYMBOL: "s"
+ADD_SYMBOL: "a"
+SUB_SYMBOL: "s"
 
-_DIV_SYMBOL: "d"
-_MUL_SYMBOL: "t"
+DIV_SYMBOL: "d"
+MUL_SYMBOL: "t"
 
 
 // Types
@@ -57,7 +57,9 @@ STRING: "`" /.*?/ "`"
 ?literal: INTEGER | STRING
 
 // Expressions:
-expr: literal | identifier_expr | exec_expr
+expr: term ((ADD_SYMBOL | SUB_SYMBOL) term)*
+term: factor ((MUL_SYMBOL | DIV_SYMBOL) factor)*
+factor: literal | identifier_expr | exec_expr | _PAREN_START expr _PAREN_END
 exec_expr: "exec" IDENTIFIER _PAREN_START expr* _PAREN_END
 identifier_expr: IDENTIFIER
 

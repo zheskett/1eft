@@ -1,8 +1,9 @@
+from abc import ABC
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class ASTNode:
+class ASTNode(ABC):
     line: int
     column: int
 
@@ -65,6 +66,40 @@ class Identifier(ASTNode):
     """Identifier represents a variable or function name."""
 
     name: str
+
+
+@dataclass(frozen=True)
+class OperatorExpr(Expression, ABC):
+    """Operator represents an expression with some operator"""
+
+    lhs: Expression
+    rhs: Expression
+
+
+@dataclass(frozen=True)
+class AddExpr(OperatorExpr):
+    """AddExpr represents an addition expression."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class SubExpr(OperatorExpr):
+    """SubExpr represents a subtraction expression."""
+
+    pass
+
+
+class MulExpr(OperatorExpr):
+    """MulExpr represents a multiplication expression."""
+
+    pass
+
+
+class DivExpr(OperatorExpr):
+    """DivExpr represents a division expression."""
+
+    pass
 
 
 @dataclass(frozen=True)

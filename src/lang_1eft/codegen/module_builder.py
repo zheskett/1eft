@@ -182,6 +182,26 @@ class ModuleBuilder:
             ]
             return builder.call(func, arg_values, name=f"call_{func_name}")
 
+        elif isinstance(expr, AddExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            return cast(ir.Instruction, builder.add(lhs, rhs, name=".addtmp"))
+
+        elif isinstance(expr, SubExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            return cast(ir.Instruction, builder.sub(lhs, rhs, name=".subtmp"))
+
+        elif isinstance(expr, MulExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            return cast(ir.Instruction, builder.mul(lhs, rhs, name=".multmp"))
+
+        elif isinstance(expr, DivExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            return cast(ir.Instruction, builder.sdiv(lhs, rhs, name=".divtmp"))
+
         else:
             error_out(
                 f"Unknown expression: {type(expr)}",
