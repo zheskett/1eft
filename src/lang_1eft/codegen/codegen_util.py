@@ -27,9 +27,10 @@ def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Ty
         ir_type = ir.VoidType()
     elif isinstance(type_node, DecimalType) or type_node is DecimalType:
         ir_type = ir.IntType(32)
-
-    if ir_type is not None:
-        return ir_type
+    elif isinstance(type_node, BooleanType) or type_node is BooleanType:
+        ir_type = ir.IntType(1)
+    elif isinstance(type_node, StrPtrType) or type_node is StrPtrType:
+        ir_type = ir.IntType(8).as_pointer()
     else:
         if isinstance(type_node, Type):
             error_out(
@@ -42,6 +43,25 @@ def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Ty
         else:
             error_out(f"Unknown type: {type_node}", 1, 1, do_raise)
             exit(1)
+
+    return ir_type
+
+
+def safe_ir_type(value: ir.Value, line=1, col=1, do_raise=False) -> ir.Type:
+    try:
+        return getattr(value, "type")
+    except AttributeError:
+        error_out(f"Value has no type: {value}", line, col, do_raise)
+        exit(1)
+
+
+def verify_ir_type(
+    value: ir.Value, expected_type: ir.Type, line=1, col=1, do_raise=False
+) -> None:
+    ir_type = safe_ir_type(value, line, col, do_raise)
+    if ir_type != expected_type:
+        error_out(f"Expected type {expected_type}, got {ir_type}", line, col, do_raise)
+        exit(1)
 
 
 def create_global_string(

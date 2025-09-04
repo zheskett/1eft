@@ -32,6 +32,7 @@ def add_all_predef_functions(module: ir.Module) -> None:
     add_wr1te_function(module)
     add_wr1te1_function(module)
     add_wr1ted_function(module)
+    add_wr1teb_function(module)
 
 
 def add_wr1te_function(module: ir.Module) -> ir.Function:
@@ -87,3 +88,31 @@ def add_wr1ted_function(module: ir.Module) -> ir.Function:
     builder.call(printf_func, [fmt_ptr, wri1ted.args[0]])
     builder.ret_void()
     return wri1ted
+
+
+def add_wr1teb_function(module: ir.Module) -> ir.Function:
+    printf_func = get_printf_function(module)
+    fmt_str = module.get_global(".fmt.s")
+    true_str = create_global_string(module, "true", name=".true")
+    false_str = create_global_string(module, "false", name=".false")
+
+    wri1teb = ir.Function(
+        module,
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(BooleanType)]),
+        name="wr1teb",
+    )
+    block = wri1teb.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+
+    fmt_ptr = builder.gep(
+        fmt_str,
+        [ZERO, ZERO],
+        inbounds=True,
+    )
+    bool_val = wri1teb.args[0]
+    true_ptr = builder.gep(true_str, [ZERO, ZERO], inbounds=True)
+    false_ptr = builder.gep(false_str, [ZERO, ZERO], inbounds=True)
+    printf_str = builder.select(bool_val, true_ptr, false_ptr)
+    builder.call(printf_func, [fmt_ptr, printf_str])
+    builder.ret_void()
+    return wri1teb

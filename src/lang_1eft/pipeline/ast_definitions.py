@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 
@@ -9,12 +9,12 @@ class ASTNode(ABC):
 
 
 @dataclass(frozen=True)
-class Expression(ASTNode):
+class Expression(ASTNode, ABC):
     pass
 
 
 @dataclass(frozen=True)
-class Statement(ASTNode):
+class Statement(ASTNode, ABC):
     pass
 
 
@@ -22,7 +22,7 @@ class Statement(ASTNode):
 class Return(Statement):
     """Return represents a return statement."""
 
-    value: Expression
+    value: Expression | None
 
 
 @dataclass(frozen=True)
@@ -33,7 +33,14 @@ class ExpressionStatement(Statement):
 
 
 @dataclass(frozen=True)
-class Type(ASTNode):
+class NoOp(Statement):
+    """NoOp represents a no-operation statement."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class Type(ASTNode, ABC):
     pass
 
 
@@ -44,6 +51,16 @@ class VoidType(Type):
 
 @dataclass(frozen=True)
 class DecimalType(Type):
+    pass
+
+
+@dataclass(frozen=True)
+class BooleanType(Type):
+    pass
+
+
+@dataclass(frozen=True)
+class StrPtrType(Type):
     pass
 
 
@@ -62,6 +79,13 @@ class DecimalLiteral(Expression):
 
 
 @dataclass(frozen=True)
+class BooleanLiteral(Expression):
+    """BooleanLiteral represents a boolean literal value."""
+
+    value: bool
+
+
+@dataclass(frozen=True)
 class Identifier(ASTNode):
     """Identifier represents a variable or function name."""
 
@@ -74,6 +98,84 @@ class OperatorExpr(Expression, ABC):
 
     lhs: Expression
     rhs: Expression
+
+
+@dataclass(frozen=True)
+class OrExpr(OperatorExpr):
+    """OrExpr represents a logical OR expression."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AndExpr(OperatorExpr):
+    """AndExpr represents a logical AND expression."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class CmpExpression(OperatorExpr, ABC):
+    """CmpExpression represents a comparison expression."""
+
+    @property
+    @abstractmethod
+    def ir_icmp(self) -> str:
+        pass
+
+
+@dataclass(frozen=True)
+class EqualsExpr(CmpExpression):
+    """EqualsExpr represents an equals expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return "=="
+
+
+@dataclass(frozen=True)
+class RevEqualsExpr(CmpExpression):
+    """RevEqualsExpr represents a not equals expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return "!="
+
+
+@dataclass(frozen=True)
+class LessThanExpr(CmpExpression):
+    """LessThanExpr represents a less than expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return "<"
+
+
+@dataclass(frozen=True)
+class LessThanEqualExpr(CmpExpression):
+    """LessThanEqualExpr represents a less than or equal to expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return "<="
+
+
+@dataclass(frozen=True)
+class GreaterThanExpr(CmpExpression):
+    """GreaterThanExpr represents a greater than expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return ">"
+
+
+@dataclass(frozen=True)
+class GreaterThanEqualExpr(CmpExpression):
+    """GreaterThanEqualExpr represents a greater than or equal to expression."""
+
+    @property
+    def ir_icmp(self) -> str:
+        return ">="
 
 
 @dataclass(frozen=True)
@@ -90,16 +192,25 @@ class SubExpr(OperatorExpr):
     pass
 
 
+@dataclass(frozen=True)
 class MulExpr(OperatorExpr):
     """MulExpr represents a multiplication expression."""
 
     pass
 
 
+@dataclass(frozen=True)
 class DivExpr(OperatorExpr):
     """DivExpr represents a division expression."""
 
     pass
+
+
+@dataclass(frozen=True)
+class RevExpr(Expression):
+    """RevExpr represents a logical NOT expression."""
+
+    value: Expression
 
 
 @dataclass(frozen=True)

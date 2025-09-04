@@ -11,38 +11,65 @@ All characters inside the 1eft language must be a character that is typed with t
 
 The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. Since "0" is not allowed, the "@" symbol acts as a 0. The numbers 6-9 are represented as a-d respectively (6 is a, 7 is b, etc.). To write a number, the number must start with the prefix %d and end with the suffix !d. Example: The number 1234567890 is ```%d12345abcd@!d```
 
+## Strings
+
+String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s best` ```. Any character is allowed in a string literal, including characters on the right hand side of the keyboard. When stored in a ```str``` variable, the string is stored *only* as a pointer to the first character in the string, similar to how strings are stored in C.
+
 ## Keywords
 
 | Keyword | Definition | Example |
 |:-|:---|:---|
-| **dect** | Decimal Type (32-bit Integer) | ```dect dec ass %d44!d$``` |
-| **v@1d** | Void (Like void in C) | See below |
-| **def** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|
-| **ret** | Return a value from a function | ```ret %d15!d$``` |
-| **exec** | Execute Function | ```exec wr1te1 %e `Hello World` !e $```|
+| **```trve```** | True Value (Boolean) | ```b@11 var ass trve$``` |
+| **```fa1se```** | False Value (Boolean) | ```b@11 var ass fa1se$``` |
+| **```b@11```** | Boolean Type (True/False) | ```b@11 var ass trve$``` |
+| **```dect```** | Decimal Type (32-bit Integer) | ```dect dec ass %d44!d$``` |
+| **```str```** | String Type (Text) | ```str var ass `1eft !s best`$``` |
+| **```v@1d```** | Void (Like void in C) | See below |
+| **```def```** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|
+| **```ret```** | Return a value from a function | ```ret %d15!d$``` or ```ret$```|
+| **```exec```** | Execute Function | ```exec wr1te1 %e `Hello World` !e $```|
+| **```bass```** | No Operation (Like "pass" in Python) | ```bass $``` |
 
 ## Punctuators
 
 | Punctuator | Definition |
 |:-|:---|
-| **``** | String Literal (Like "" in C) |
-| **$** | End Line (Like ";" in C) |
-| **%s** | Start Scope (Like "{" in C) |
-| **!s** | End Scope (Like "}" in C) |
-| **%e** | Start Expression (Like "(" in C) |
-| **!e** | End Expression (Like ")" in C) |
-| **%d** | Start Decimal |
-| **!d** | End Decimal |
-| **a** | Addition |
-| **s** | Subtraction |
-| **t** | Times (Multiplication) |
-| **d** | Division |
-| **ass** | Assignment Operator (=) |
+| **``` `` ```** | String Literal (Like "" in C) |
+| **```$```** | End Line (Like ";" in C) |
+| **```%s```** | Start Scope (Like "{" in C) |
+| **```!s```** | End Scope (Like "}" in C) |
+| **```%e```** | Start Expression (Like "(" in C) |
+| **```!e```** | End Expression (Like ")" in C) |
+| **```%d```** | Start Decimal |
+| **```!d```** | End Decimal |
+
+## Operators
+
+IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
+
+| Operator | Definition |
+|:-|:---|
+| **```ass```** | Assignment Operator (=) |
+| **```rev```** | Reverse (Not) Operator (```rev fa1se```)|
+| **```sf@```** | Subtract From 0 (Negation) Operator (```sf@ %d1!d```) |
+| **```a```** | Addition |
+| **```s```** | Subtraction |
+| **```t```** | Times (Multiplication) |
+| **```d```** | Division |
+| **```eq```** | Equality Operator (==) |
+| **```req```** | Reverse Equal Operator (!=) |
+| **```1t```** | Less Than Operator (<) |
+| **```gt```** | Greater Than Operator (>) |
+| **```1te```** | Less Than or Equal To Operator (<=) |
+| **```gte```** | Greater Than or Equal To Operator (>=) |
+| **```@@```** | And Operator (&&) |
+| **```@r```** | Or Operator (\|\|) |
 
 ## Language Predefined Functions
 
 | Function | Usage | Example |
 |:-|:---|:---|
-| **wr1te** | Print a string literal | ```exec wr1te %e `abc` !e$```|
-| **wr1te1** | Print a string literal with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$``` |
-| **wr1ted** | Print a decimal type (literal or variable) | ```eexec wr1ted %e %d15!d$ !e```|
+| **```wr1te```** | Print a string literal | ```exec wr1te %e `abc` !e$```|
+| **```wr1te1```** | Print a string literal with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$```|
+| **```wr1ted```** | Print a decimal type (literal or variable) | ```exec wr1ted %e %d15!d$ !e```|
+| **```wr1teb```** | Print a boolean type (literal or variable) | ```exec wr1teb %e trve !e$```|

@@ -83,12 +83,22 @@ class ModuleBuilder:
     def build_statement(
         self, builder: ir.IRBuilder, stmt: Statement, block_values: dict[str, ir.Value]
     ) -> None:
+        # DCE
+        if cast(ir.Block, builder.block).is_terminated:
+            return
+
         if isinstance(stmt, ExpressionStatement):
             self.build_expression(builder, stmt.expression, block_values)
 
         elif isinstance(stmt, Return):
-            ret_val = self.build_expression(builder, stmt.value, block_values)
-            builder.ret(ret_val)
+            if stmt.value is None:
+                builder.ret_void()
+            else:
+                ret_val = self.build_expression(builder, stmt.value, block_values)
+                builder.ret(ret_val)
+
+        elif isinstance(stmt, NoOp):
+            pass
 
         elif isinstance(stmt, VarDeclStatement):
             if stmt.identifier.name in block_values:
@@ -131,6 +141,9 @@ class ModuleBuilder:
         elif isinstance(expr, StringLiteral):
             string = create_global_string(builder.module, expr.value)
             return builder.gep(string, [ZERO, ZERO], inbounds=True)
+
+        elif isinstance(expr, BooleanLiteral):
+            return ir.Constant(get_llvm_type(BooleanType), expr.value)
 
         elif isinstance(expr, IdentifierExpr):
             if expr.identifier.name not in block_values:
@@ -182,24 +195,119 @@ class ModuleBuilder:
             ]
             return builder.call(func, arg_values, name=f"call_{func_name}")
 
+        elif isinstance(expr, RevExpr):
+            value = self.build_expression(builder, expr.value, block_values)
+            verify_ir_type(
+                value, get_llvm_type(BooleanType), expr.line, expr.column, self.verbose
+            )
+            return cast(ir.Instruction, builder.not_(value, name=".revtmp"))
+
+        elif isinstance(expr, OrExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(BooleanType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(BooleanType), expr.line, expr.column, self.verbose
+            )
+            return cast(ir.Instruction, builder.or_(lhs, rhs, name=".ortmp"))
+
+        elif isinstance(expr, AndExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(BooleanType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(BooleanType), expr.line, expr.column, self.verbose
+            )
+            return cast(ir.Instruction, builder.and_(lhs, rhs, name=".andtmp"))
+
+        elif isinstance(expr, CmpExpression):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            if (
+                isinstance(expr, GreaterThanEqualExpr)
+                or isinstance(expr, LessThanEqualExpr)
+                or isinstance(expr, GreaterThanExpr)
+                or isinstance(expr, LessThanExpr)
+            ):
+                verify_ir_type(
+                    lhs,
+                    get_llvm_type(DecimalType),
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+                verify_ir_type(
+                    rhs,
+                    get_llvm_type(DecimalType),
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+            else:
+                # Types must be the same, and not string types
+                if not (safe_ir_type(lhs) == safe_ir_type(rhs)):
+                    error_out(
+                        f"Cannot compare {safe_ir_type(lhs)} and {safe_ir_type(rhs)}",
+                        expr.line,
+                        expr.column,
+                        self.verbose,
+                    )
+                    exit(1)
+                if safe_ir_type(lhs) == get_llvm_type(StrPtrType):
+                    error_out(
+                        f"Cannot compare string literals in 1eft",
+                        expr.line,
+                        expr.column,
+                        self.verbose,
+                    )
+            return builder.icmp_signed(expr.ir_icmp, lhs, rhs, name=f".cmptmp")
+
         elif isinstance(expr, AddExpr):
             lhs = self.build_expression(builder, expr.lhs, block_values)
             rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
             return cast(ir.Instruction, builder.add(lhs, rhs, name=".addtmp"))
 
         elif isinstance(expr, SubExpr):
             lhs = self.build_expression(builder, expr.lhs, block_values)
             rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
             return cast(ir.Instruction, builder.sub(lhs, rhs, name=".subtmp"))
 
         elif isinstance(expr, MulExpr):
             lhs = self.build_expression(builder, expr.lhs, block_values)
             rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
             return cast(ir.Instruction, builder.mul(lhs, rhs, name=".multmp"))
 
         elif isinstance(expr, DivExpr):
             lhs = self.build_expression(builder, expr.lhs, block_values)
             rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
             return cast(ir.Instruction, builder.sdiv(lhs, rhs, name=".divtmp"))
 
         else:

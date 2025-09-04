@@ -16,63 +16,78 @@ DEC_DIGIT: "1".."5" | "a".."d" | "@"
 
 INTEGER: _DEC_NUMBER_START DEC_DIGIT+ _DEC_NUMBER_END
 
-LOWER_LETTER: "a".."g"
-    | "q".."t"
-    | "v".."x"
-    | "z"
-UPPER_LETTER: "A".."G"
-    | "Q".."T"
-    | "V".."X"
-    | "Z"
-SAFE_LOWER_LETTER: "b".."c"
-    | "e".."g"
-    | "q".."r"
-    | "v".."x"
-    | "z"
-
-SAFE_LETTER: SAFE_LOWER_LETTER | UPPER_LETTER
-LETTER: LOWER_LETTER | UPPER_LETTER
-CNAME: SAFE_LETTER | LETTER (LETTER | DIGIT)+
+// Any name not in the reserved keywords, cannot start with a numeric
+CNAME: /(?!fa1se\b|trve\b|bass\b|ret\b|eq\b|req\b|gt\b|1te\b|gte\b|rev\b|sf@\b|str\b|b@@1\b|dect\b|v@1d\b|def\b|exec\b|ass\b|a\b|s\b|d\b|t\b)([A-GQ-TV-XZa-gq-tv-xz][A-GQ-TV-XZa-gq-tv-xz@1-4]*)/
 
 IDENTIFIER: CNAME
 
-_ASSIGN_SYMBOL: "ass"
+// Operators
+// Complex regex avoids matching within CNAMEs
+_ASSIGN_SYMBOL: /(?<![A-Za-z@0-9])ass(?![A-Za-z@0-9])/
 
-ADD_SYMBOL: "a"
-SUB_SYMBOL: "s"
 
-DIV_SYMBOL: "d"
-MUL_SYMBOL: "t"
+EQUALITY_SYMBOL: /(?<![A-Za-z@0-9])eq(?![A-Za-z@0-9])/
+NOT_EQUALITY_SYMBOL: /(?<![A-Za-z@0-9])req(?![A-Za-z@0-9])/
+LESS_THAN_SYMBOL: /(?<![A-Za-z@0-9])1t(?![A-Za-z@0-9])/
+GREATER_THAN_SYMBOL: /(?<![A-Za-z@0-9])gt(?![A-Za-z@0-9])/
+LESS_THAN_EQUAL_SYMBOL: /(?<![A-Za-z@0-9])1te(?![A-Za-z@0-9])/
+GREATER_THAN_EQUAL_SYMBOL: /(?<![A-Za-z@0-9])gte(?![A-Za-z@0-9])/
+
+ADD_SYMBOL: /(?<![A-Za-z@0-9])a(?![A-Za-z@0-9])/
+SUB_SYMBOL: /(?<![A-Za-z@0-9])s(?![A-Za-z@0-9])/
+MUL_SYMBOL: /(?<![A-Za-z@0-9])t(?![A-Za-z@0-9])/
+DIV_SYMBOL: /(?<![A-Za-z@0-9])d(?![A-Za-z@0-9])/
+
+_REVERSE_SYMBOL: /(?<![A-Za-z@0-9])rev(?![A-Za-z@0-9])/
+
+// Logic
+AND_SYMBOL: /(?<![A-Za-z@0-9])@@(?![A-Za-z@0-9])/
+OR_SYMBOL:  /(?<![A-Za-z@0-9])@r(?![A-Za-z@0-9])/
+TRUE: /(?<![A-Za-z@0-9])trve(?![A-Za-z@0-9])/
+FALSE: /(?<![A-Za-z@0-9])fa1se(?![A-Za-z@0-9])/
+BOOLEAN_LITERAL: TRUE | FALSE
 
 
 // Types
 // The ! is used to keep track of line numbers for error reporting
-!void_type: "v@1d"
-!decimal_type: "dect"
+!void_type: /(?<![A-Za-z@0-9])v@1d(?![A-Za-z@0-9])/
+!decimal_type: /(?<![A-Za-z@0-9])dect(?![A-Za-z@0-9])/
+!boolean_type: /(?<![A-Za-z@0-9])b@@1(?![A-Za-z@0-9])/
+!str_ptr_type: /(?<![A-Za-z@0-9])str(?![A-Za-z@0-9])/
 
-?type: void_type | decimal_type
+?type: void_type | decimal_type | boolean_type | str_ptr_type
 
 // Expressions
 STRING: "`" /.*?/ "`"
-?literal: INTEGER | STRING
+?literal: INTEGER | STRING | BOOLEAN_LITERAL
 
 // Expressions:
-expr: term ((ADD_SYMBOL | SUB_SYMBOL) term)*
+// We use the * and the apply left associativity programmatically
+expr: or_expr
+or_expr: and_expr (OR_SYMBOL and_expr)*
+and_expr: equality (AND_SYMBOL equality)*
+equality: comparison ((EQUALITY_SYMBOL | NOT_EQUALITY_SYMBOL) comparison)*
+comparison: formula ((LESS_THAN_SYMBOL | GREATER_THAN_SYMBOL | LESS_THAN_EQUAL_SYMBOL | GREATER_THAN_EQUAL_SYMBOL) formula)*
+formula: term ((ADD_SYMBOL | SUB_SYMBOL) term)*
 term: factor ((MUL_SYMBOL | DIV_SYMBOL) factor)*
-factor: literal | identifier_expr | exec_expr | _PAREN_START expr _PAREN_END
+factor: literal | identifier_expr | exec_expr | rev_expr | neg_expr | _PAREN_START expr _PAREN_END
+rev_expr: _REVERSE_SYMBOL factor
+neg_expr: "sf@" factor
 exec_expr: "exec" IDENTIFIER _PAREN_START expr* _PAREN_END
 identifier_expr: IDENTIFIER
 
 // Statements
-ret_stmt: "ret" expr _LINE_END
+!ret_stmt: "ret" expr? _LINE_END
 var_decl_stmt: type IDENTIFIER _LINE_END
 var_ass_stmt: IDENTIFIER _ASSIGN_SYMBOL expr _LINE_END
 expr_stmt: expr _LINE_END
+!no_op_stmt: "bass" _LINE_END
 
 ?statement: ret_stmt
     | expr_stmt
     | var_decl_stmt
     | var_ass_stmt
+    | no_op_stmt
 
 !block: _SCOPE_START (statement)* _SCOPE_END
 

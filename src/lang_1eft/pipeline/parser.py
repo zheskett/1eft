@@ -15,12 +15,17 @@ class Parser:
         with grammar_file.open("r") as gf:
             grammar = gf.read()
 
-        self.lark = lark.Lark(grammar, ambiguity="explicit")
+        self.lark = lark.Lark(grammar, ambiguity="explicit", strict=True)
 
     def parse(self, code: str) -> lark.ParseTree:
         parsed = None
         try:
             parsed = self.lark.parse(code)
+            if str(parsed).count("_ambig") > 0:
+                rich.print(
+                    f"[red]Ambiguities found in code:[/red] {str(parsed).count('_ambig')}"
+                )
+                exit(1)
         except lark.exceptions.LarkError as e:
             rich.print(f"[red]Error parsing code:[/red] {e}")
             raise e
@@ -29,6 +34,6 @@ class Parser:
 
 if __name__ == "__main__":
     parser = Parser()
-    with Path("1eft~srcs/c!1eft").open("r") as f:
+    with Path("1eft~srcs/d!1eft").open("r") as f:
         tree = parser.parse(f.read())
     rich.print(tree)
