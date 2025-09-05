@@ -260,6 +260,24 @@ class Block(ASTNode):
 
 
 @dataclass(frozen=True)
+class ElseIf(ASTNode):
+    """ElseIf represents an else-if statement."""
+
+    condition: Expression
+    body: Block
+
+
+@dataclass(frozen=True)
+class IfStatement(Statement):
+    """IfStatement represents an if statement."""
+
+    condition: Expression
+    body: Block
+    else_ifs: list[ElseIf]
+    else_body: Block | None
+
+
+@dataclass(frozen=True)
 class FunctionDef(ASTNode):
     """FunctionDef represents a function definition."""
 

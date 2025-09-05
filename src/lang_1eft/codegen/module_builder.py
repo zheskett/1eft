@@ -126,6 +126,87 @@ class ModuleBuilder:
             assign_val = self.build_expression(builder, stmt.value, block_values)
             builder.store(assign_val, block_values[stmt.identifier.name])
 
+        elif isinstance(stmt, IfStatement):
+
+            def build_elseif(
+                builder: ir.IRBuilder,
+                if_stmt: IfStatement,
+                index: int,
+                block_values: dict[str, ir.Value],
+            ) -> None:
+                elseif = if_stmt.else_ifs[index]
+                condition = self.build_expression(
+                    builder, elseif.condition, block_values
+                )
+                verify_ir_type(
+                    condition,
+                    get_llvm_type(BooleanType),
+                    elseif.condition.line,
+                    elseif.condition.column,
+                    self.verbose,
+                )
+
+                # This is the last elseif and there is no else
+                if index + 1 >= len(if_stmt.else_ifs) and if_stmt.else_body is None:
+                    with builder.if_then(condition):
+                        scope = block_values.copy()
+                        for statement in elseif.body.statements:
+                            self.build_statement(builder, statement, scope)
+                    return
+
+                with builder.if_else(condition) as (then, otherwise):
+                    with then:
+                        scope = block_values.copy()
+                        for statement in elseif.body.statements:
+                            self.build_statement(builder, statement, scope)
+                    with otherwise:
+                        # Next statement is an elseif
+                        if index + 1 < len(if_stmt.else_ifs):
+                            build_elseif(builder, if_stmt, index + 1, block_values)
+
+                        elif if_stmt.else_body is not None:
+                            scope = block_values.copy()
+                            for statement in if_stmt.else_body.statements:
+                                self.build_statement(builder, statement, scope)
+
+                        else:
+                            error_out("Unreachable state reached", 1, 1, self.verbose)
+                            exit(1)
+
+            condition = self.build_expression(builder, stmt.condition, block_values)
+            verify_ir_type(
+                condition,
+                get_llvm_type(BooleanType),
+                stmt.condition.line,
+                stmt.condition.column,
+                self.verbose,
+            )
+
+            if stmt.else_body is None and len(stmt.else_ifs) == 0:
+                with builder.if_then(condition):
+                    scope = block_values.copy()
+                    for statement in stmt.body.statements:
+                        self.build_statement(builder, statement, scope)
+
+            else:
+                with builder.if_else(condition) as (then, otherwise):
+                    with then:
+                        scope = block_values.copy()
+                        for statement in stmt.body.statements:
+                            self.build_statement(builder, statement, scope)
+                    with otherwise:
+                        if len(stmt.else_ifs) > 0:
+                            build_elseif(builder, stmt, 0, block_values)
+
+                        elif stmt.else_body is not None:
+                            scope = block_values.copy()
+                            for statement in stmt.else_body.statements:
+                                self.build_statement(builder, statement, scope)
+
+                        else:
+                            error_out("Unreachable state reached", 1, 1, self.verbose)
+                            exit(1)
+
         else:
             error_out(
                 f"Unknown statement: {type(stmt)}", stmt.line, stmt.column, self.verbose

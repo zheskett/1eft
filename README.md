@@ -19,16 +19,19 @@ String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s
 
 | Keyword | Definition | Example |
 |:-|:---|:---|
-| **```trve```** | True Value (Boolean) | ```b@11 var ass trve$``` |
-| **```fa1se```** | False Value (Boolean) | ```b@11 var ass fa1se$``` |
-| **```b@11```** | Boolean Type (True/False) | ```b@11 var ass trve$``` |
-| **```dect```** | Decimal Type (32-bit Integer) | ```dect dec ass %d44!d$``` |
-| **```str```** | String Type (Text) | ```str var ass `1eft !s best`$``` |
+| **```trve```** | True Value (Boolean) | ```var ass trve$``` |
+| **```fa1se```** | False Value (Boolean) | ```var ass fa1se$``` |
+| **```b@11```** | Boolean Type (True/False) | ```b@11 var$``` |
+| **```dect```** | Decimal Type (32-bit Integer) | ```dect dec$``` |
+| **```str```** | String Type (Text) | ```str var$``` |
 | **```v@1d```** | Void (Like void in C) | See below |
 | **```def```** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|
 | **```ret```** | Return a value from a function | ```ret %d15!d$``` or ```ret$```|
 | **```exec```** | Execute Function | ```exec wr1te1 %e `Hello World` !e $```|
 | **```bass```** | No Operation (Like "pass" in Python) | ```bass $``` |
+| **```1f```** | If Statement | ```1f %d1!d eq %d1!d %s var ass %d1!d$ !s``` |
+| **```e1se```** | Else Statement | ```1f %d1!d eq %d1!d %s var ass %d1!d$ !s e1se %s var ass %d@!d$ !s``` |
+| **```e1se1f```** | Else If Statement | ```1f fa1se %s var ass %d1!d$ !s e1se1f trve %s var ass %d@!d$ !s``` |
 
 ## Punctuators
 

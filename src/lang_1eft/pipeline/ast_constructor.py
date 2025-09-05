@@ -299,6 +299,46 @@ class ASTConstructor(Transformer):
             statements,
         )
 
+    def else_stmt(self, items: list[Any]) -> ast.Block:
+        assert len(items) == 1
+        assert isinstance(items[0], ast.Block)
+        return items[0]
+
+    def else_if_stmt(self, items: list[Any]) -> ast.ElseIf:
+        assert len(items) == 2
+        assert isinstance(items[0], ast.Expression)
+        assert isinstance(items[1], ast.Block)
+        return ast.ElseIf(items[0].line, items[0].column, items[0], items[1])
+
+    def if_stmt(self, items: list[Any]) -> ast.IfStatement:
+        assert len(items) >= 2
+        assert isinstance(items[0], ast.Expression)
+        assert isinstance(items[1], ast.Block)
+        if len(items) == 2:
+            return ast.IfStatement(
+                items[0].line, items[0].column, items[0], items[1], [], None
+            )
+
+        assert all(isinstance(i, ast.ElseIf) for i in items[2:-1])
+        if isinstance(items[-1], ast.ElseIf):
+            return ast.IfStatement(
+                items[0].line,
+                items[0].column,
+                items[0],
+                items[1],
+                items[2:],
+                None,
+            )
+        assert isinstance(items[-1], ast.Block)
+        return ast.IfStatement(
+            items[0].line,
+            items[0].column,
+            items[0],
+            items[1],
+            items[2:-1],
+            items[-1],
+        )
+
     def function_def(self, items: list[Any]) -> ast.FunctionDef:
         assert len(items) == 5
         assert isinstance(items[0], Token)
