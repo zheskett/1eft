@@ -8,6 +8,7 @@ from lang_1eft.pipeline.ast_definitions import *
 i8 = ir.IntType(8)
 i32 = ir.IntType(32)
 i1 = ir.IntType(1)
+i64 = ir.IntType(64)
 i8ptr = i8.as_pointer()
 
 ZERO: ir.Constant = ir.Constant(i32, 0)
@@ -156,6 +157,42 @@ def get_atoi_function(module: ir.Module) -> ir.Function:
         )
         atoi_func = ir.Function(module, atoi_type, name="atoi")
         return atoi_func
+
+
+def get_rand_function(module: ir.Module) -> ir.Function:
+    try:
+        return module.get_global("rand")
+    except KeyError:
+        rand_type = ir.FunctionType(
+            i32,
+            [],
+        )
+        rand_func = ir.Function(module, rand_type, name="rand")
+        return rand_func
+
+
+def get_srand_function(module: ir.Module) -> ir.Function:
+    try:
+        return module.get_global("srand")
+    except KeyError:
+        srand_type = ir.FunctionType(
+            ir.VoidType(),
+            [i32],
+        )
+        srand_func = ir.Function(module, srand_type, name="srand")
+        return srand_func
+
+
+def get_time_function(module: ir.Module) -> ir.Function:
+    try:
+        return module.get_global("time")
+    except KeyError:
+        time_type = ir.FunctionType(
+            i32,
+            [VOID_PTR],
+        )
+        time_func = ir.Function(module, time_type, name="time")
+        return time_func
 
 
 def error_out(message: str, line: int, col: int, do_raise: bool = False) -> None:

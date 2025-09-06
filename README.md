@@ -80,3 +80,5 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 | **```wr1ted```** | Print a decimal type (literal or variable) | ```exec wr1ted %e %d15!d$ !e```|
 | **```wr1teb```** | Print a boolean type (literal or variable) | ```exec wr1teb %e trve !e$```|
 | **```getd```** | Get a decimal from stdin (No arguments)| ```exec getd %e!e$```|
+| **```srazd```** | Seed the random number generator (auto seeded with time at program start) | ```exec srazd %e %d12345!d !e$```|
+| **```razdd```** | Get a random decimal between 0 and 32-bit integer maximum | ```var ass exec razdd %e!e$ %% %d!5d$``` |

@@ -22,10 +22,23 @@ def wrap_main_function(module: ir.Module) -> None:
         error_out("No valid 'start' function found", 1, 1)
         exit(1)
 
+    builder = ir.IRBuilder()
+    builder.position_at_start(start_func.entry_basic_block)
+    time_func = get_time_function(module)
+    srand_func = get_srand_function(module)
+
+    # Auto seed random
+    time_call = builder.call(time_func, [ir.Constant(VOID_PTR, None)], name="call_time")
+    builder.call(
+        srand_func,
+        [time_call],
+        name="call_srand",
+    )
+
     func_type = ir.FunctionType(i32, [])
     func = ir.Function(module, func_type, name="main")
     block = func.append_basic_block(name="entry")
-    builder = ir.IRBuilder(block)
+    builder.position_at_start(block)
     ret_val = builder.call(start_func, [], name="call_start")
     builder.ret(ret_val)
 
@@ -36,6 +49,8 @@ def add_all_predef_functions(module: ir.Module) -> None:
     add_wr1ted_function(module)
     add_wr1teb_function(module)
     add_getd_function(module)
+    add_srazd_function(module)
+    add_razdd_function(module)
 
 
 def add_wr1te_function(module: ir.Module) -> ir.Function:
@@ -148,3 +163,30 @@ def add_getd_function(module: ir.Module) -> ir.Function:
     )
     builder.ret(builder.select(cond, builder.call(atoi_func, [buf_ptr]), ZERO))
     return getd
+
+
+def add_srazd_function(module: ir.Module) -> ir.Function:
+    srand_func = get_srand_function(module)
+
+    srazd = ir.Function(
+        module,
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(DecimalType)]),
+        name="srazd",
+    )
+    block = srazd.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+    builder.call(srand_func, [srazd.args[0]])
+    builder.ret_void()
+    return srazd
+
+
+def add_razdd_function(module: ir.Module) -> ir.Function:
+    rand_func = get_rand_function(module)
+
+    razdd = ir.Function(
+        module, ir.FunctionType(get_llvm_type(DecimalType), []), name="razdd"
+    )
+    block = razdd.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+    builder.ret(builder.call(rand_func, []))
+    return razdd
