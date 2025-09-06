@@ -5,6 +5,7 @@ A programming language designed exclusively for the left hand on a QWERTY keyboa
 ## Rules
 
 All characters inside the 1eft language must be a character that is typed with the left hand while touch typing on a QWERTY keyboard (including numbers and newline characters). The only exception to this rule is within a comment or string literal.
+
 ![image](https://github.com/user-attachments/assets/6c3abb7d-ddf4-4bf5-85a3-7f86a844b8f5)
 
 ## Numbers
@@ -32,6 +33,7 @@ String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s
 | **```1f```** | If Statement | ```1f %d1!d eq %d1!d %s var ass %d1!d$ !s``` |
 | **```e1se```** | Else Statement | ```1f %d1!d eq %d1!d %s var ass %d1!d$ !s e1se %s var ass %d@!d$ !s``` |
 | **```e1se1f```** | Else If Statement | ```1f fa1se %s var ass %d1!d$ !s e1se1f trve %s var ass %d@!d$ !s``` |
+| **```as```** | As Loop (While Loop) | ```as var lt %d1@!d %s var ass var s %d1!d$ !s``` |
 
 ## Punctuators
 
@@ -59,6 +61,7 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 | **```s```** | Subtraction |
 | **```t```** | Times (Multiplication) |
 | **```d```** | Division |
+| **```%%```** | Modulus |
 | **```eq```** | Equality Operator (==) |
 | **```req```** | Reverse Equal Operator (!=) |
 | **```1t```** | Less Than Operator (<) |

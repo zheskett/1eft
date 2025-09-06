@@ -17,7 +17,7 @@ DEC_DIGIT: "1".."5" | "a".."d" | "@"
 INTEGER: _DEC_NUMBER_START DEC_DIGIT+ _DEC_NUMBER_END
 
 // Any name not in the reserved keywords, cannot start with a numeric
-CNAME: /(?!fa1se\b|trve\b|bass\b|ret\b|eq\b|req\b|gt\b|1te\b|gte\b|rev\b|sf@\b|str\b|b@@1\b|dect\b|v@1d\b|def\b|exec\b|ass\b|a\b|s\b|d\b|t\b|1f\b|e1se\b|e1se1f\b)([A-GQ-TV-XZa-gq-tv-xz][A-GQ-TV-XZa-gq-tv-xz@1-4]*)/
+CNAME: /(?!fa1se\b|trve\b|bass\b|ret\b|eq\b|req\b|gt\b|1te\b|gte\b|rev\b|sf@\b|str\b|b@@1\b|dect\b|v@1d\b|def\b|exec\b|ass\b|a\b|s\b|d\b|t\b|1f\b|e1se\b|e1se1f\b|as\b)([A-GQ-TV-XZa-gq-tv-xz][A-GQ-TV-XZa-gq-tv-xz@1-4]*)/
 
 IDENTIFIER: CNAME
 
@@ -37,6 +37,7 @@ ADD_SYMBOL: /(?<![A-Za-z@0-9])a(?![A-Za-z@0-9])/
 SUB_SYMBOL: /(?<![A-Za-z@0-9])s(?![A-Za-z@0-9])/
 MUL_SYMBOL: /(?<![A-Za-z@0-9])t(?![A-Za-z@0-9])/
 DIV_SYMBOL: /(?<![A-Za-z@0-9])d(?![A-Za-z@0-9])/
+MOD_SYMBOL: /(?<![A-Za-z@0-9])%%(?![A-Za-z@0-9])/
 
 _REVERSE_SYMBOL: /(?<![A-Za-z@0-9])rev(?![A-Za-z@0-9])/
 
@@ -69,7 +70,7 @@ and_expr: equality (AND_SYMBOL equality)*
 equality: comparison ((EQUALITY_SYMBOL | NOT_EQUALITY_SYMBOL) comparison)*
 comparison: formula ((LESS_THAN_SYMBOL | GREATER_THAN_SYMBOL | LESS_THAN_EQUAL_SYMBOL | GREATER_THAN_EQUAL_SYMBOL) formula)*
 formula: term ((ADD_SYMBOL | SUB_SYMBOL) term)*
-term: factor ((MUL_SYMBOL | DIV_SYMBOL) factor)*
+term: factor ((MUL_SYMBOL | DIV_SYMBOL | MOD_SYMBOL) factor)*
 factor: literal | identifier_expr | exec_expr | rev_expr | neg_expr | _PAREN_START expr _PAREN_END
 rev_expr: _REVERSE_SYMBOL factor
 neg_expr: "sf@" factor
@@ -86,6 +87,7 @@ expr_stmt: expr _LINE_END
 if_stmt: "1f" expr block else_if_stmt* else_stmt?
 else_if_stmt: "e1se1f" expr block
 else_stmt: "e1se" block
+as_stmt: "as" expr block
 
 ?statement: ret_stmt
     | expr_stmt
@@ -93,6 +95,7 @@ else_stmt: "e1se" block
     | var_ass_stmt
     | no_op_stmt
     | if_stmt
+    | as_stmt
 
 !block: _SCOPE_START (statement)* _SCOPE_END
 

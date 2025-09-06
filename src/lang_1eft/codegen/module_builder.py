@@ -207,6 +207,32 @@ class ModuleBuilder:
                             error_out("Unreachable state reached", 1, 1, self.verbose)
                             exit(1)
 
+        elif isinstance(stmt, AsStatement):
+            this_func: ir.Function = builder.function
+            loop_cond_bb: ir.Block = this_func.append_basic_block("ascond")
+            loop_bb: ir.Block = this_func.append_basic_block("asloop")
+            loop_end_bb: ir.Block = this_func.append_basic_block("asend")
+
+            builder.branch(loop_cond_bb)
+            builder.position_at_start(loop_cond_bb)
+            condition = self.build_expression(builder, stmt.condition, block_values)
+            verify_ir_type(
+                condition,
+                get_llvm_type(BooleanType),
+                stmt.condition.line,
+                stmt.condition.column,
+                self.verbose,
+            )
+            builder.cbranch(condition, loop_bb, loop_end_bb)
+
+            builder.position_at_start(loop_bb)
+            scope = block_values.copy()
+            for statement in stmt.body.statements:
+                self.build_statement(builder, statement, scope)
+            builder.branch(loop_cond_bb)
+
+            builder.position_at_start(loop_end_bb)
+
         else:
             error_out(
                 f"Unknown statement: {type(stmt)}", stmt.line, stmt.column, self.verbose
@@ -390,6 +416,17 @@ class ModuleBuilder:
                 rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
             )
             return cast(ir.Instruction, builder.sdiv(lhs, rhs, name=".divtmp"))
+
+        elif isinstance(expr, ModExpr):
+            lhs = self.build_expression(builder, expr.lhs, block_values)
+            rhs = self.build_expression(builder, expr.rhs, block_values)
+            verify_ir_type(
+                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            verify_ir_type(
+                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
+            )
+            return cast(ir.Instruction, builder.srem(lhs, rhs, name=".modtmp"))
 
         else:
             error_out(

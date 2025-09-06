@@ -207,6 +207,13 @@ class DivExpr(OperatorExpr):
 
 
 @dataclass(frozen=True)
+class ModExpr(OperatorExpr):
+    """ModExpr represents a modulus expression."""
+
+    pass
+
+
+@dataclass(frozen=True)
 class RevExpr(Expression):
     """RevExpr represents a logical NOT expression."""
 
@@ -275,6 +282,14 @@ class IfStatement(Statement):
     body: Block
     else_ifs: list[ElseIf]
     else_body: Block | None
+
+
+@dataclass(frozen=True)
+class AsStatement(Statement):
+    """AsStatement represents a while loop statement."""
+
+    condition: Expression
+    body: Block
 
 
 @dataclass(frozen=True)

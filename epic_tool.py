@@ -37,7 +37,8 @@ def split_statements(line: str) -> list[str]:
             buf += ch
         i += 1
 
-    parts.append(buf)
+    if buf:
+        parts.append(buf)
     return parts
 
 
@@ -84,6 +85,7 @@ def main(
                 use_indent = min(indent, wrap - 4)
 
         with open(file.with_suffix(suffix), "w") as f:
+            final = final.strip()
             f.write(final)
 
 
