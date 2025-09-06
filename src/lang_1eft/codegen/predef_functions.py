@@ -4,6 +4,8 @@ import llvmlite.ir as ir
 from lang_1eft.pipeline.ast_definitions import *
 from lang_1eft.codegen.codegen_util import *
 
+GETD_BUFFER_SIZE = 12
+
 
 def wrap_main_function(module: ir.Module) -> None:
     start_func = None
@@ -20,7 +22,7 @@ def wrap_main_function(module: ir.Module) -> None:
         error_out("No valid 'start' function found", 1, 1)
         exit(1)
 
-    func_type = ir.FunctionType(ir.IntType(32), [])
+    func_type = ir.FunctionType(i32, [])
     func = ir.Function(module, func_type, name="main")
     block = func.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -33,6 +35,7 @@ def add_all_predef_functions(module: ir.Module) -> None:
     add_wr1te1_function(module)
     add_wr1ted_function(module)
     add_wr1teb_function(module)
+    add_getd_function(module)
 
 
 def add_wr1te_function(module: ir.Module) -> ir.Function:
@@ -41,7 +44,7 @@ def add_wr1te_function(module: ir.Module) -> ir.Function:
 
     wri1te = ir.Function(
         module,
-        ir.FunctionType(get_llvm_type(VoidType), [ir.IntType(8).as_pointer()]),
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(StrPtrType)]),
         name="wr1te",
     )
     block = wri1te.append_basic_block(name="entry")
@@ -58,7 +61,7 @@ def add_wr1te1_function(module: ir.Module) -> ir.Function:
     puts_func = get_puts_function(module)
     wri1te1 = ir.Function(
         module,
-        ir.FunctionType(get_llvm_type(VoidType), [ir.IntType(8).as_pointer()]),
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(StrPtrType)]),
         name="wr1te1",
     )
     block = wri1te1.append_basic_block(name="entry")
@@ -116,3 +119,32 @@ def add_wr1teb_function(module: ir.Module) -> ir.Function:
     builder.call(printf_func, [fmt_ptr, printf_str])
     builder.ret_void()
     return wri1teb
+
+
+def add_getd_function(module: ir.Module) -> ir.Function:
+    fgets_func = get_fgets_function(module)
+    atoi_func = get_atoi_function(module)
+    fdopen_func = get_fdopen(module)
+    mode_str = create_global_string(module, "r", ".mode.r")
+
+    getd = ir.Function(
+        module, ir.FunctionType(get_llvm_type(DecimalType), []), name="getd"
+    )
+    block = getd.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+
+    mode_ptr = builder.gep(mode_str, [ZERO, ZERO], inbounds=True)
+    stdin_FILEptr = builder.call(fdopen_func, [ZERO, mode_ptr])
+
+    buf = builder.alloca(ir.ArrayType(i8, GETD_BUFFER_SIZE), name="getdbuf")
+    buf_ptr = builder.gep(buf, [ZERO, ZERO], inbounds=True)
+
+    result = builder.call(
+        fgets_func, [buf_ptr, ir.Constant(i32, GETD_BUFFER_SIZE), stdin_FILEptr]
+    )
+
+    cond = builder.icmp_unsigned(
+        "!=", result, ir.Constant(get_llvm_type(StrPtrType), None)
+    )
+    builder.ret(builder.select(cond, builder.call(atoi_func, [buf_ptr]), ZERO))
+    return getd

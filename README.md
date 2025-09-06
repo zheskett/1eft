@@ -79,3 +79,4 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 | **```wr1te1```** | Print a string literal with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$```|
 | **```wr1ted```** | Print a decimal type (literal or variable) | ```exec wr1ted %e %d15!d$ !e```|
 | **```wr1teb```** | Print a boolean type (literal or variable) | ```exec wr1teb %e trve !e$```|
+| **```getd```** | Get a decimal from stdin (No arguments)| ```exec getd %e!e$```|

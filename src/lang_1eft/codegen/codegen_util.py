@@ -5,7 +5,16 @@ import llvmlite.ir as ir
 from lang_1eft.pipeline.ast_definitions import *
 
 
-ZERO: ir.Constant = ir.Constant(ir.IntType(32), 0)
+i8 = ir.IntType(8)
+i32 = ir.IntType(32)
+i1 = ir.IntType(1)
+i8ptr = i8.as_pointer()
+
+ZERO: ir.Constant = ir.Constant(i32, 0)
+
+# For things like FILE*
+VOID_PTR = i8ptr
+
 
 string_numbers: dict[str, int] = {}
 
@@ -26,11 +35,11 @@ def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Ty
     if isinstance(type_node, VoidType) or type_node is VoidType:
         ir_type = ir.VoidType()
     elif isinstance(type_node, DecimalType) or type_node is DecimalType:
-        ir_type = ir.IntType(32)
+        ir_type = i32
     elif isinstance(type_node, BooleanType) or type_node is BooleanType:
         ir_type = ir.IntType(1)
     elif isinstance(type_node, StrPtrType) or type_node is StrPtrType:
-        ir_type = ir.IntType(8).as_pointer()
+        ir_type = i8ptr
     else:
         if isinstance(type_node, Type):
             error_out(
@@ -72,7 +81,7 @@ def create_global_string(
     raw = bytearray(value.encode("utf-8") + b"\00")
 
     # Create a global string (array of characters)
-    str_const = ir.Constant(ir.ArrayType(ir.IntType(8), len(raw)), raw)
+    str_const = ir.Constant(ir.ArrayType(i8, len(raw)), raw)
 
     if allow_dup and name in string_numbers:
         string_numbers[name] += 1
@@ -93,7 +102,7 @@ def get_puts_function(module: ir.Module) -> ir.Function:
     try:
         return module.get_global("puts")
     except KeyError:
-        puts_type = ir.FunctionType(ir.IntType(32), [ir.IntType(8).as_pointer()])
+        puts_type = ir.FunctionType(i32, [i8ptr])
         puts_func = ir.Function(module, puts_type, name="puts")
         return puts_func
 
@@ -102,11 +111,51 @@ def get_printf_function(module: ir.Module) -> ir.Function:
     try:
         return module.get_global("printf")
     except KeyError:
-        printf_type = ir.FunctionType(
-            ir.IntType(32), [ir.IntType(8).as_pointer()], var_arg=True
-        )
+        printf_type = ir.FunctionType(i32, [i8ptr], var_arg=True)
         printf_func = ir.Function(module, printf_type, name="printf")
         return printf_func
+
+
+def get_fgets_function(module: ir.Module) -> ir.Function:
+    try:
+        return module.get_global("fgets")
+    except KeyError:
+        fgets_type = ir.FunctionType(
+            i8ptr,
+            [
+                i8ptr,
+                i32,
+                VOID_PTR,
+            ],
+        )
+        fgets_func = ir.Function(module, fgets_type, name="fgets")
+        return fgets_func
+
+
+def get_fdopen(module: ir.Module):
+    try:
+        return module.get_global("fdopen")
+    except KeyError:
+        return ir.Function(
+            module,
+            ir.FunctionType(
+                VOID_PTR,
+                [i32, i8ptr],
+            ),
+            name="fdopen",
+        )
+
+
+def get_atoi_function(module: ir.Module) -> ir.Function:
+    try:
+        return module.get_global("atoi")
+    except KeyError:
+        atoi_type = ir.FunctionType(
+            i32,
+            [i8ptr],
+        )
+        atoi_func = ir.Function(module, atoi_type, name="atoi")
+        return atoi_func
 
 
 def error_out(message: str, line: int, col: int, do_raise: bool = False) -> None:
