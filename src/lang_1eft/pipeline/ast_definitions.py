@@ -60,8 +60,15 @@ class BooleanType(Type):
 
 
 @dataclass(frozen=True)
-class StrPtrType(Type):
+class CharType(Type):
     pass
+
+
+@dataclass(frozen=True)
+class PointerOf(Type):
+    """PointerOf represents a pointer type."""
+
+    base_type: Type
 
 
 @dataclass(frozen=True)
@@ -228,7 +235,21 @@ class IdentifierExpr(Expression):
 
 
 @dataclass(frozen=True)
-class Exec(Expression):
+class AddressOfExpr(Expression):
+    """AddressOfExpr represents an address-of expression."""
+
+    identifier: Identifier
+
+
+@dataclass(frozen=True)
+class DerefExpr(Expression):
+    """DerefExpr represents a dereference expression."""
+
+    value: Expression
+
+
+@dataclass(frozen=True)
+class ExecExpr(Expression):
     """Exec represents an exec expression."""
 
     identifier: Identifier
@@ -247,8 +268,8 @@ class VarDeclStatement(Statement):
 class VarAssStatement(Statement):
     """VarAssStatement represents a variable assignment statement."""
 
-    identifier: Identifier
-    value: Expression
+    lhs: Identifier | DerefExpr
+    rhs: Expression
 
 
 @dataclass(frozen=True)

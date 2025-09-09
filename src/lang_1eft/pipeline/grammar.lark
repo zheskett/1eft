@@ -17,13 +17,16 @@ DEC_DIGIT: "1".."5" | "a".."d" | "@"
 INTEGER: _DEC_NUMBER_START DEC_DIGIT+ _DEC_NUMBER_END
 
 // Any name not in the reserved keywords, cannot start with a numeric
-CNAME: /(?!fa1se\b|trve\b|bass\b|ret\b|eq\b|req\b|gt\b|1te\b|gte\b|rev\b|sf@\b|str\b|b@@1\b|dect\b|v@1d\b|def\b|exec\b|ass\b|a\b|s\b|d\b|t\b|1f\b|e1se\b|e1se1f\b|as\b)([A-GQ-TV-XZa-gq-tv-xz][A-GQ-TV-XZa-gq-tv-xz@1-4]*)/
+CNAME: /(?!fa1se\b|trve\b|bass\b|ret\b|eq\b|req\b|gt\b|1te\b|gte\b|rev\b|sf@\b|b@@1\b|dect\b|v@1d\b|def\b|exec\b|ass\b|a\b|s\b|d\b|t\b|1f\b|e1se\b|e1se1f\b|as\b|addr\b|car\b)([A-GQ-TV-XZa-gq-tv-xz][A-GQ-TV-XZa-gq-tv-xz@1-4]*)/
 
 IDENTIFIER: CNAME
 
 // Operators
 // Complex regex avoids matching within CNAMEs
 _ASSIGN_SYMBOL: /(?<![A-Za-z@0-9])ass(?![A-Za-z@0-9])/
+POINTER_SYMBOL: "#"
+ADDRESS_OF_SYMBOL: /(?<![A-Za-z@0-9])addr(?![A-Za-z@0-9])/
+ACCESS_SYMBOL: "~"
 
 
 EQUALITY_SYMBOL: /(?<![A-Za-z@0-9])eq(?![A-Za-z@0-9])/
@@ -54,9 +57,9 @@ BOOLEAN_LITERAL: TRUE | FALSE
 !void_type: /(?<![A-Za-z@0-9])v@1d(?![A-Za-z@0-9])/
 !decimal_type: /(?<![A-Za-z@0-9])dect(?![A-Za-z@0-9])/
 !boolean_type: /(?<![A-Za-z@0-9])b@@1(?![A-Za-z@0-9])/
-!str_ptr_type: /(?<![A-Za-z@0-9])str(?![A-Za-z@0-9])/
+!char_type: /(?<![A-Za-z@0-9])car(?![A-Za-z@0-9])/
 
-?type: void_type | decimal_type | boolean_type | str_ptr_type
+?type: (void_type | decimal_type | boolean_type | char_type) POINTER_SYMBOL*
 
 // Expressions
 STRING: "`" /.*?/ "`"
@@ -71,16 +74,17 @@ equality: comparison ((EQUALITY_SYMBOL | NOT_EQUALITY_SYMBOL) comparison)*
 comparison: formula ((LESS_THAN_SYMBOL | GREATER_THAN_SYMBOL | LESS_THAN_EQUAL_SYMBOL | GREATER_THAN_EQUAL_SYMBOL) formula)*
 formula: term ((ADD_SYMBOL | SUB_SYMBOL) term)*
 term: factor ((MUL_SYMBOL | DIV_SYMBOL | MOD_SYMBOL) factor)*
-factor: literal | identifier_expr | exec_expr | rev_expr | neg_expr | _PAREN_START expr _PAREN_END
+factor: literal | identifier_expr | exec_expr | rev_expr | neg_expr | deref_expr | _PAREN_START expr _PAREN_END
+deref_expr: POINTER_SYMBOL factor
 rev_expr: _REVERSE_SYMBOL factor
 neg_expr: "sf@" factor
 exec_expr: "exec" IDENTIFIER _PAREN_START expr* _PAREN_END
-identifier_expr: IDENTIFIER
+identifier_expr: ADDRESS_OF_SYMBOL? IDENTIFIER
 
 // Statements
 !ret_stmt: "ret" expr? _LINE_END
 var_decl_stmt: type IDENTIFIER _LINE_END
-var_ass_stmt: IDENTIFIER _ASSIGN_SYMBOL expr _LINE_END
+var_ass_stmt: (deref_expr | IDENTIFIER) _ASSIGN_SYMBOL expr _LINE_END
 expr_stmt: expr _LINE_END
 !no_op_stmt: "bass" _LINE_END
 

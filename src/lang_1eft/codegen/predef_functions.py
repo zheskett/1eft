@@ -11,7 +11,7 @@ def wrap_main_function(module: ir.Module) -> None:
     start_func = None
     for func in module.functions:
         if (
-            func.name == "start"
+            func.name == FUNC_PREFIX + "start"
             and func.function_type.return_type == get_llvm_type(DecimalType)
             and len(func.args) == 0
         ):
@@ -48,6 +48,8 @@ def add_all_predef_functions(module: ir.Module) -> None:
     add_wr1te1_function(module)
     add_wr1ted_function(module)
     add_wr1teb_function(module)
+    add_wr1tec_function(module)
+    add_wr1tea_function(module)
     add_getd_function(module)
     add_srazd_function(module)
     add_razdd_function(module)
@@ -59,8 +61,10 @@ def add_wr1te_function(module: ir.Module) -> ir.Function:
 
     wri1te = ir.Function(
         module,
-        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(StrPtrType)]),
-        name="wr1te",
+        ir.FunctionType(
+            get_llvm_type(VoidType), [get_llvm_type(PointerOf(0, 0, CharType(0, 0)))]
+        ),
+        name=FUNC_PREFIX + "wr1te",
     )
     block = wri1te.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -76,8 +80,10 @@ def add_wr1te1_function(module: ir.Module) -> ir.Function:
     puts_func = get_puts_function(module)
     wri1te1 = ir.Function(
         module,
-        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(StrPtrType)]),
-        name="wr1te1",
+        ir.FunctionType(
+            get_llvm_type(VoidType), [get_llvm_type(PointerOf(0, 0, CharType(0, 0)))]
+        ),
+        name=FUNC_PREFIX + "wr1te1",
     )
     block = wri1te1.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -93,7 +99,7 @@ def add_wr1ted_function(module: ir.Module) -> ir.Function:
     wri1ted = ir.Function(
         module,
         ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(DecimalType)]),
-        name="wr1ted",
+        name=FUNC_PREFIX + "wr1ted",
     )
     block = wri1ted.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -117,7 +123,7 @@ def add_wr1teb_function(module: ir.Module) -> ir.Function:
     wri1teb = ir.Function(
         module,
         ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(BooleanType)]),
-        name="wr1teb",
+        name=FUNC_PREFIX + "wr1teb",
     )
     block = wri1teb.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -136,6 +142,51 @@ def add_wr1teb_function(module: ir.Module) -> ir.Function:
     return wri1teb
 
 
+def add_wr1tec_function(module: ir.Module) -> ir.Function:
+    printf_func = get_printf_function(module)
+    fmt_str = create_global_string(module, "%c", name=".fmt.c")
+
+    wri1tec = ir.Function(
+        module,
+        ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(CharType)]),
+        name=FUNC_PREFIX + "wr1tec",
+    )
+    block = wri1tec.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+
+    fmt_ptr = builder.gep(
+        fmt_str,
+        [ZERO, ZERO],
+        inbounds=True,
+    )
+    builder.call(printf_func, [fmt_ptr, wri1tec.args[0]])
+    builder.ret_void()
+    return wri1tec
+
+
+def add_wr1tea_function(module: ir.Module) -> ir.Function:
+    printf_func = get_printf_function(module)
+    fmt_str = create_global_string(module, "%p", name=".fmt.p")
+
+    wri1tea = ir.Function(
+        module,
+        ir.FunctionType(get_llvm_type(VoidType), [VOID_PTR]),
+        name=FUNC_PREFIX + "wr1tea",
+    )
+    block = wri1tea.append_basic_block(name="entry")
+    builder = ir.IRBuilder(block)
+
+    fmt_ptr = builder.gep(
+        fmt_str,
+        [ZERO, ZERO],
+        inbounds=True,
+    )
+    builder.call(printf_func, [fmt_ptr, wri1tea.args[0]])
+    builder.ret_void()
+    functions_with_void_ptrs[wri1tea.name] = [0]
+    return wri1tea
+
+
 def add_getd_function(module: ir.Module) -> ir.Function:
     fgets_func = get_fgets_function(module)
     atoi_func = get_atoi_function(module)
@@ -143,7 +194,9 @@ def add_getd_function(module: ir.Module) -> ir.Function:
     mode_str = create_global_string(module, "r", ".mode.r")
 
     getd = ir.Function(
-        module, ir.FunctionType(get_llvm_type(DecimalType), []), name="getd"
+        module,
+        ir.FunctionType(get_llvm_type(DecimalType), []),
+        name=FUNC_PREFIX + "getd",
     )
     block = getd.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -158,9 +211,7 @@ def add_getd_function(module: ir.Module) -> ir.Function:
         fgets_func, [buf_ptr, ir.Constant(i32, GETD_BUFFER_SIZE), stdin_FILEptr]
     )
 
-    cond = builder.icmp_unsigned(
-        "!=", result, ir.Constant(get_llvm_type(StrPtrType), None)
-    )
+    cond = builder.icmp_unsigned("!=", result, ir.Constant(i8ptr, None))
     builder.ret(builder.select(cond, builder.call(atoi_func, [buf_ptr]), ZERO))
     return getd
 
@@ -171,7 +222,7 @@ def add_srazd_function(module: ir.Module) -> ir.Function:
     srazd = ir.Function(
         module,
         ir.FunctionType(get_llvm_type(VoidType), [get_llvm_type(DecimalType)]),
-        name="srazd",
+        name=FUNC_PREFIX + "srazd",
     )
     block = srazd.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
@@ -184,7 +235,9 @@ def add_razdd_function(module: ir.Module) -> ir.Function:
     rand_func = get_rand_function(module)
 
     razdd = ir.Function(
-        module, ir.FunctionType(get_llvm_type(DecimalType), []), name="razdd"
+        module,
+        ir.FunctionType(get_llvm_type(DecimalType), []),
+        name=FUNC_PREFIX + "razdd",
     )
     block = razdd.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)

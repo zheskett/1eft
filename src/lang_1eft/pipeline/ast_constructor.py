@@ -4,6 +4,8 @@ from lark import Token, Transformer
 from lang_1eft.pipeline.ast_definitions import *
 from lang_1eft.pipeline.ast_util import *
 
+ADDRESS_OF_SYMBOL = "addr"
+POINTER_SYMBOL = "#"
 TRUE_SYMBOL = "trve"
 FALSE_SYMBOL = "fa1se"
 ADD_SYMBOL = "a"
@@ -65,13 +67,22 @@ class ASTConstructor(Transformer):
             items[0].column or 0,
         )
 
-    def str_ptr_type(self, items: list[Any]) -> StrPtrType:
+    def char_type(self, items: list[Any]) -> CharType:
         assert len(items) == 1
         assert isinstance(items[0], Token)
-        return StrPtrType(
+        return CharType(
             items[0].line or 0,
             items[0].column or 0,
         )
+
+    def type(self, items: list[Any]) -> Type:
+        assert len(items) >= 1
+        assert isinstance(items[0], Type)
+        ret = items[0]
+        for i in items[1:]:
+            assert isinstance(i, Token) and i.value == POINTER_SYMBOL
+            ret = PointerOf(i.line or 0, i.column or 0, ret)
+        return ret
 
     def INTEGER(self, item: Token) -> DecimalLiteral:
         return DecimalLiteral(
@@ -99,19 +110,31 @@ class ASTConstructor(Transformer):
     def IDENTIFIER(self, item: Token) -> Identifier:
         return Identifier(item.line or 0, item.column or 0, item.value)
 
-    def identifier_expr(self, items: list[Any]) -> IdentifierExpr:
-        assert len(items) == 1
+    def identifier_expr(self, items: list[Any]) -> IdentifierExpr | AddressOfExpr:
+        assert len(items) == 1 or len(items) == 2
+        if len(items) == 2:
+            assert isinstance(items[0], Token)
+            assert items[0].value == ADDRESS_OF_SYMBOL
+            assert isinstance(items[1], Identifier)
+            return AddressOfExpr(items[0].line or 0, items[0].column or 0, items[1])
         assert isinstance(items[0], Identifier)
         return IdentifierExpr(items[0].line, items[0].column, items[0])
 
-    def exec_expr(self, items: list[Any]) -> Exec:
+    def deref_expr(self, items: list[Any]) -> DerefExpr:
+        assert len(items) == 2
+        assert isinstance(items[0], Token)
+        assert items[0].value == POINTER_SYMBOL
+        assert isinstance(items[1], Expression)
+        return DerefExpr(items[0].line or 0, items[0].column or 0, items[1])
+
+    def exec_expr(self, items: list[Any]) -> ExecExpr:
         assert len(items) >= 1
         assert isinstance(items[0], Identifier)
         if len(items) == 1:
-            return Exec(items[0].line, items[0].column, items[0], [])
+            return ExecExpr(items[0].line, items[0].column, items[0], [])
 
         assert all(isinstance(i, Expression) for i in items[1:])
-        return Exec(items[0].line, items[0].column, items[0], items[1:])
+        return ExecExpr(items[0].line, items[0].column, items[0], items[1:])
 
     def rev_expr(self, items: list[Any]) -> RevExpr:
         assert len(items) == 1
@@ -277,7 +300,7 @@ class ASTConstructor(Transformer):
 
     def var_ass_stmt(self, items: list[Any]) -> VarAssStatement:
         assert len(items) == 2
-        assert isinstance(items[0], Identifier)
+        assert isinstance(items[0], Identifier | DerefExpr)
         assert isinstance(items[1], Expression)
         return VarAssStatement(items[0].line, items[0].column, items[0], items[1])
 

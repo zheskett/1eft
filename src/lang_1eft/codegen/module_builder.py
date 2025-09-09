@@ -46,7 +46,9 @@ class ModuleBuilder:
             get_llvm_type(func_def.type),
             [get_llvm_type(p.type) for p in func_def.parameters],
         )
-        func = ir.Function(self.module, func_type, name=func_def.identifier.name)
+        func = ir.Function(
+            self.module, func_type, name=FUNC_PREFIX + func_def.identifier.name
+        )
 
         # Block containing function body
         block = func.append_basic_block(name="entry")
@@ -114,17 +116,44 @@ class ModuleBuilder:
             block_values[stmt.identifier.name] = value
 
         elif isinstance(stmt, VarAssStatement):
-            if stmt.identifier.name not in block_values:
+            ass_var = None
+            if isinstance(stmt.lhs, DerefExpr):
+                # Dont dereference because we assign to the pointer
+                ass_var = self.build_expression(builder, stmt.lhs.value, block_values)
+
+            elif isinstance(stmt.lhs, Identifier):
+                if stmt.lhs.name not in block_values:
+                    error_out(
+                        f"Variable '{stmt.lhs.name}' not declared in this scope",
+                        stmt.lhs.line,
+                        stmt.lhs.column,
+                        self.verbose,
+                    )
+                    exit(1)
+                ass_var = block_values[stmt.lhs.name]
+
+            rich.print(ass_var)
+
+            if ass_var is None:
                 error_out(
-                    f"Variable '{stmt.identifier.name}' not declared in this scope",
-                    stmt.identifier.line,
-                    stmt.identifier.column,
+                    f"Variable assignment failed",
+                    stmt.lhs.line,
+                    stmt.lhs.column,
                     self.verbose,
                 )
                 exit(1)
 
-            assign_val = self.build_expression(builder, stmt.value, block_values)
-            builder.store(assign_val, block_values[stmt.identifier.name])
+            rich.print(stmt.rhs)
+            assign_val = self.build_expression(builder, stmt.rhs, block_values)
+            rich.print(assign_val)
+
+            # We check if pointer to char because alloca is stored as a pointer
+            if safe_ir_type(assign_val) == i8ptr and safe_ir_type(ass_var) == i8ptr:
+                # Get first character of string
+                assign_val = builder.load(assign_val)
+
+            rich.print(assign_val)
+            builder.store(assign_val, ass_var)
 
         elif isinstance(stmt, IfStatement):
 
@@ -265,10 +294,34 @@ class ModuleBuilder:
 
             return builder.load(var, name=expr.identifier.name)
 
-        elif isinstance(expr, Exec):
+        elif isinstance(expr, AddressOfExpr):
+            if expr.identifier.name not in block_values:
+                error_out(
+                    f"Variable '{expr.identifier.name}' not declared in this scope",
+                    expr.identifier.line,
+                    expr.identifier.column,
+                    self.verbose,
+                )
+                exit(1)
+            return block_values[expr.identifier.name]
+
+        elif isinstance(expr, DerefExpr):
+            value = self.build_expression(builder, expr.value, block_values)
+            if not safe_ir_type(value).is_pointer:
+                error_out(
+                    "Cannot dereference non-pointer type",
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+                exit(1)
+            return builder.load(value, name=".dereftmp")
+
+        elif isinstance(expr, ExecExpr):
             func_name = expr.identifier.name
+            call_func_name = FUNC_PREFIX + func_name
             try:
-                func = builder.module.get_global(func_name)
+                func = builder.module.get_global(call_func_name)
             except KeyError:
                 error_out(
                     f"Function '{func_name}' not found",
@@ -296,11 +349,18 @@ class ModuleBuilder:
                 )
                 exit(1)
 
-            arg_values = [
-                self.build_expression(builder, arg, block_values)
-                for arg in expr.arguments
-            ]
-            return builder.call(func, arg_values, name=f"call_{func_name}")
+            # Bit cast arguments that need to be void pointers
+            cast_list = []
+            if call_func_name in functions_with_void_ptrs:
+                cast_list = functions_with_void_ptrs[call_func_name]
+            arg_values = []
+            for i, arg in enumerate(expr.arguments):
+                val = self.build_expression(builder, arg, block_values)
+                if i in cast_list:
+                    val = builder.bitcast(val, VOID_PTR, name=".voidptrcast")
+                arg_values.append(val)
+
+            return builder.call(func, arg_values, name=f"call_{call_func_name}")
 
         elif isinstance(expr, RevExpr):
             value = self.build_expression(builder, expr.value, block_values)
@@ -364,13 +424,6 @@ class ModuleBuilder:
                         self.verbose,
                     )
                     exit(1)
-                if safe_ir_type(lhs) == get_llvm_type(StrPtrType):
-                    error_out(
-                        f"Cannot compare string literals in 1eft",
-                        expr.line,
-                        expr.column,
-                        self.verbose,
-                    )
             return builder.icmp_signed(expr.ir_icmp, lhs, rhs, name=f".cmptmp")
 
         elif isinstance(expr, AddExpr):

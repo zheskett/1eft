@@ -14,7 +14,7 @@ The numbers 1-5 are the only numbers allowed to be typed in the 1eft language. S
 
 ## Strings
 
-String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s best` ```. Any character is allowed in a string literal, including characters on the right hand side of the keyboard. When stored in a ```str``` variable, the string is stored *only* as a pointer to the first character in the string, similar to how strings are stored in C.
+String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s best` ```. Any character is allowed in a string literal, including characters on the right hand side of the keyboard. When stored in a ```car``` variable, a the variable will only store the first character of the string. To store multiple characters, use a ```char#``` variable.
 
 ## Keywords
 
@@ -24,7 +24,7 @@ String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s
 | **```fa1se```** | False Value (Boolean) | ```var ass fa1se$``` |
 | **```b@11```** | Boolean Type (True/False) | ```b@11 var$``` |
 | **```dect```** | Decimal Type (32-bit Integer) | ```dect dec$``` |
-| **```str```** | String Type (Text) | ```str var$``` |
+| **```car```** | Character Type (Text) | ```car var$``` |
 | **```v@1d```** | Void (Like void in C) | See below |
 | **```def```** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|
 | **```ret```** | Return a value from a function | ```ret %d15!d$``` or ```ret$```|
@@ -55,6 +55,8 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 | Operator | Definition |
 |:-|:---|
 | **```ass```** | Assignment Operator (=) |
+| **```#```** | Pointer or Dereference Symbol (Like "*" in C) |
+| **```addr```** | Address of Operator ("&" in C) |
 | **```rev```** | Reverse (Not) Operator (```rev fa1se```)|
 | **```sf@```** | Subtract From 0 (Negation) Operator (```sf@ %d1!d```) |
 | **```a```** | Addition |
@@ -75,10 +77,12 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 
 | Function | Usage | Example |
 |:-|:---|:---|
-| **```wr1te```** | Print a string literal | ```exec wr1te %e `abc` !e$```|
-| **```wr1te1```** | Print a string literal with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$```|
-| **```wr1ted```** | Print a decimal type (literal or variable) | ```exec wr1ted %e %d15!d$ !e```|
-| **```wr1teb```** | Print a boolean type (literal or variable) | ```exec wr1teb %e trve !e$```|
+| **```wr1te```** | Print a char# | ```exec wr1te %e `abc` !e$```|
+| **```wr1te1```** | Print a char# with a new line character at the end | ```exec wr1te1 %e `Hello World` !e$```|
+| **```wr1ted```** | Print a decimal type | ```exec wr1ted %e %d15!d$ !e```|
+| **```wr1teb```** | Print a boolean type | ```exec wr1teb %e trve !e$```|
+| **```wr1tec```** | Print a char type | ```exec wr1tec %e `A` !e$```|
+| **```wr1tea```** | Print an address (pointer) | ```exec wr1tea %e addr var !e$```|
 | **```getd```** | Get a decimal from stdin (No arguments)| ```exec getd %e!e$```|
 | **```srazd```** | Seed the random number generator (auto seeded with time at program start) | ```exec srazd %e %d12345!d !e$```|
 | **```razdd```** | Get a random decimal between 0 and 32-bit integer maximum | ```var ass exec razdd %e!e$ %% %d!5d$``` |

@@ -9,15 +9,17 @@ i8 = ir.IntType(8)
 i32 = ir.IntType(32)
 i1 = ir.IntType(1)
 i64 = ir.IntType(64)
-i8ptr = i8.as_pointer()
+i8ptr = ir.PointerType(i8)
 
 ZERO: ir.Constant = ir.Constant(i32, 0)
-
 # For things like FILE*
 VOID_PTR = i8ptr
 
+FUNC_PREFIX = "1eft."
 
 string_numbers: dict[str, int] = {}
+# Lists functions that contain void pointers and which arguments will will need to bit cast
+functions_with_void_ptrs: dict[str, list[int]] = {}
 
 
 def generate_llvm_machine(triple: str, opt: int) -> llvm.TargetMachine:
@@ -25,7 +27,7 @@ def generate_llvm_machine(triple: str, opt: int) -> llvm.TargetMachine:
     target_machine = target.create_target_machine(
         cpu="generic",
         features="",
-        opt=2,
+        opt=opt,
     )
     return target_machine
 
@@ -33,14 +35,17 @@ def generate_llvm_machine(triple: str, opt: int) -> llvm.TargetMachine:
 def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Type:
     ir_type = None
 
-    if isinstance(type_node, VoidType) or type_node is VoidType:
+    if isinstance(type_node, PointerOf):
+        base_ir_type = get_llvm_type(type_node.base_type, do_raise)
+        ir_type = ir.PointerType(base_ir_type)
+    elif isinstance(type_node, VoidType) or type_node is VoidType:
         ir_type = ir.VoidType()
     elif isinstance(type_node, DecimalType) or type_node is DecimalType:
         ir_type = i32
     elif isinstance(type_node, BooleanType) or type_node is BooleanType:
         ir_type = ir.IntType(1)
-    elif isinstance(type_node, StrPtrType) or type_node is StrPtrType:
-        ir_type = i8ptr
+    elif isinstance(type_node, CharType) or type_node is CharType:
+        ir_type = i8
     else:
         if isinstance(type_node, Type):
             error_out(
