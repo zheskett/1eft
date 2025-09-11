@@ -1,5 +1,6 @@
 from typing import Any
 from lark import Token, Transformer
+import rich
 
 from lang_1eft.pipeline.ast_definitions import *
 from lang_1eft.pipeline.ast_util import *
@@ -21,6 +22,9 @@ EQ_SYMBOL = "eq"
 REQ_SYMBOL = "req"
 AND_SYMBOL = "@@"
 OR_SYMBOL = "@r"
+
+MAX_INTEGER = 2**63 - 1
+MIN_INTEGER = -(2**63)
 
 
 class ASTConstructor(Transformer):
@@ -85,10 +89,12 @@ class ASTConstructor(Transformer):
         return ret
 
     def INTEGER(self, item: Token) -> DecimalLiteral:
+        num = translate_integer(item.value)
+        assert num <= MAX_INTEGER and num >= MIN_INTEGER
         return DecimalLiteral(
             item.line if item.line else 0,
             item.column if item.column else 0,
-            translate_integer(item.value),
+            num,
         )
 
     def STRING(self, item: Token) -> StringLiteral:

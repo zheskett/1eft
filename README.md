@@ -23,7 +23,7 @@ String literals are enclosed in backticks (``` ` ```). For example: ``` `1eft !s
 | **```trve```** | True Value (Boolean) | ```var ass trve$``` |
 | **```fa1se```** | False Value (Boolean) | ```var ass fa1se$``` |
 | **```b@11```** | Boolean Type (True/False) | ```b@11 var$``` |
-| **```dect```** | Decimal Type (32-bit Integer) | ```dect dec$``` |
+| **```dect```** | Decimal Type (64-bit Integer) | ```dect dec$``` |
 | **```car```** | Character Type (Text) | ```car var$``` |
 | **```v@1d```** | Void (Like void in C) | See below |
 | **```def```** | Define a function | ```def v@1d stare dect dec %s exec set %e dec !e$ !s```|

@@ -4,7 +4,7 @@ import llvmlite.ir as ir
 from lang_1eft.pipeline.ast_definitions import *
 from lang_1eft.codegen.codegen_util import *
 
-GETD_BUFFER_SIZE = 12
+GETD_BUFFER_SIZE = 22  # 64-bit int + sign + null terminator + 1
 
 
 def wrap_main_function(module: ir.Module) -> None:
@@ -40,7 +40,7 @@ def wrap_main_function(module: ir.Module) -> None:
     block = func.append_basic_block(name="entry")
     builder.position_at_start(block)
     ret_val = builder.call(start_func, [], name="call_start")
-    builder.ret(ret_val)
+    builder.ret(builder.trunc(ret_val, i32))
 
 
 def add_all_predef_functions(module: ir.Module) -> None:
@@ -94,7 +94,7 @@ def add_wr1te1_function(module: ir.Module) -> ir.Function:
 
 def add_wr1ted_function(module: ir.Module) -> ir.Function:
     printf_func = get_printf_function(module)
-    fmt_str = create_global_string(module, "%d", name=".fmt.d")
+    fmt_str = create_global_string(module, "%ld", name=".fmt.d")
 
     wri1ted = ir.Function(
         module,
@@ -189,7 +189,7 @@ def add_wr1tea_function(module: ir.Module) -> ir.Function:
 
 def add_getd_function(module: ir.Module) -> ir.Function:
     fgets_func = get_fgets_function(module)
-    atoi_func = get_atoi_function(module)
+    atol_func = get_atol_function(module)
     fdopen_func = get_fdopen(module)
     mode_str = create_global_string(module, "r", ".mode.r")
 
@@ -212,7 +212,13 @@ def add_getd_function(module: ir.Module) -> ir.Function:
     )
 
     cond = builder.icmp_unsigned("!=", result, ir.Constant(i8ptr, None))
-    builder.ret(builder.select(cond, builder.call(atoi_func, [buf_ptr]), ZERO))
+    builder.ret(
+        builder.select(
+            cond,
+            builder.call(atol_func, [buf_ptr]),
+            ir.Constant(get_llvm_type(DecimalType), 0),
+        )
+    )
     return getd
 
 
@@ -226,7 +232,7 @@ def add_srazd_function(module: ir.Module) -> ir.Function:
     )
     block = srazd.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
-    builder.call(srand_func, [srazd.args[0]])
+    builder.call(srand_func, [builder.trunc(srazd.args[0], i32)])
     builder.ret_void()
     return srazd
 
@@ -241,5 +247,27 @@ def add_razdd_function(module: ir.Module) -> ir.Function:
     )
     block = razdd.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
-    builder.ret(builder.call(rand_func, []))
+
+    rand_block_size = ir.Constant(i32, 0x7FFF)
+    rand_blocks = [
+        builder.zext(builder.and_(builder.call(rand_func, []), rand_block_size), i64)
+        for _ in range(5)
+    ]
+
+    builder.ret(
+        builder.or_(
+            builder.shl(rand_blocks[0], ir.Constant(i64, 48)),
+            builder.or_(
+                builder.shl(rand_blocks[1], ir.Constant(i64, 35)),
+                builder.or_(
+                    builder.shl(rand_blocks[2], ir.Constant(i64, 22)),
+                    builder.or_(
+                        builder.shl(rand_blocks[3], ir.Constant(i64, 9)),
+                        builder.lshr(rand_blocks[4], ir.Constant(i64, 4)),
+                    ),
+                ),
+            ),
+        )
+    )
+
     return razdd

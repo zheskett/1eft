@@ -18,7 +18,7 @@ VOID_PTR = i8ptr
 FUNC_PREFIX = "1eft."
 
 string_numbers: dict[str, int] = {}
-# Lists functions that contain void pointers and which arguments will will need to bit cast
+# Lists functions that contain void pointers and which arguments will need to bit cast
 functions_with_void_ptrs: dict[str, list[int]] = {}
 
 
@@ -41,7 +41,7 @@ def get_llvm_type(type_node: Type | type[Type], do_raise: bool = False) -> ir.Ty
     elif isinstance(type_node, VoidType) or type_node is VoidType:
         ir_type = ir.VoidType()
     elif isinstance(type_node, DecimalType) or type_node is DecimalType:
-        ir_type = i32
+        ir_type = i64
     elif isinstance(type_node, BooleanType) or type_node is BooleanType:
         ir_type = ir.IntType(1)
     elif isinstance(type_node, CharType) or type_node is CharType:
@@ -152,16 +152,16 @@ def get_fdopen(module: ir.Module):
         )
 
 
-def get_atoi_function(module: ir.Module) -> ir.Function:
+def get_atol_function(module: ir.Module) -> ir.Function:
     try:
         return module.get_global("atoi")
     except KeyError:
-        atoi_type = ir.FunctionType(
-            i32,
+        atol_type = ir.FunctionType(
+            i64,
             [i8ptr],
         )
-        atoi_func = ir.Function(module, atoi_type, name="atoi")
-        return atoi_func
+        atol_func = ir.Function(module, atol_type, name="atol")
+        return atol_func
 
 
 def get_rand_function(module: ir.Module) -> ir.Function:
