@@ -426,26 +426,68 @@ class ModuleBuilder:
                     exit(1)
             return builder.icmp_signed(expr.ir_icmp, lhs, rhs, name=f".cmptmp")
 
-        elif isinstance(expr, AddExpr):
+        elif isinstance(expr, AddExpr) or isinstance(expr, SubExpr):
             lhs = self.build_expression(builder, expr.lhs, block_values)
             rhs = self.build_expression(builder, expr.rhs, block_values)
-            verify_ir_type(
-                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
-            )
-            verify_ir_type(
-                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
-            )
-            return cast(ir.Instruction, builder.add(lhs, rhs, name=".addtmp"))
+            rich.print(safe_ir_type(lhs))
+            rich.print(safe_ir_type(rhs))
+            if safe_ir_type(lhs).is_pointer or (
+                safe_ir_type(rhs).is_pointer and isinstance(expr, AddExpr)
+            ):
+                # Pointer arithmetic
 
-        elif isinstance(expr, SubExpr):
-            lhs = self.build_expression(builder, expr.lhs, block_values)
-            rhs = self.build_expression(builder, expr.rhs, block_values)
-            verify_ir_type(
-                lhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
-            )
-            verify_ir_type(
-                rhs, get_llvm_type(DecimalType), expr.line, expr.column, self.verbose
-            )
+                if safe_ir_type(lhs).is_pointer and safe_ir_type(rhs).is_pointer:
+                    error_out(
+                        "Cannot add or subtract two pointer types",
+                        expr.line,
+                        expr.column,
+                        self.verbose,
+                    )
+                    exit(1)
+
+                if safe_ir_type(rhs).is_pointer and isinstance(expr, AddExpr):
+                    lhs, rhs = rhs, lhs
+
+                verify_ir_type(
+                    rhs,
+                    get_llvm_type(DecimalType),
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+
+                return builder.gep(
+                    lhs,
+                    [
+                        (
+                            rhs
+                            if isinstance(expr, AddExpr)
+                            else builder.neg(rhs, name=".negtemp")
+                        )
+                    ],
+                    inbounds=True,
+                    name=".ptrarithtmp",
+                )
+
+            else:
+                verify_ir_type(
+                    lhs,
+                    get_llvm_type(DecimalType),
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+                verify_ir_type(
+                    rhs,
+                    get_llvm_type(DecimalType),
+                    expr.line,
+                    expr.column,
+                    self.verbose,
+                )
+
+            if isinstance(expr, AddExpr):
+                return cast(ir.Instruction, builder.add(lhs, rhs, name=".addtmp"))
+
             return cast(ir.Instruction, builder.sub(lhs, rhs, name=".subtmp"))
 
         elif isinstance(expr, MulExpr):

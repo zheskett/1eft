@@ -85,4 +85,4 @@ IMPORTANT NOTE: OPERATORS MUST HAVE SPACES ON BOTH SIDES!
 | **```wr1tea```** | Print an address (pointer) | ```exec wr1tea %e addr var !e$```|
 | **```getd```** | Get a decimal from stdin (No arguments)| ```exec getd %e!e$```|
 | **```srazd```** | Seed the random number generator (auto seeded with time at program start) | ```exec srazd %e %d12345!d !e$```|
-| **```razdd```** | Get a random decimal between 0 and 32-bit integer maximum | ```var ass exec razdd %e!e$ %% %d!5d$``` |
+| **```razdd```** | Get a random decimal between 0 and signed 64-bit integer maximum | ```var ass exec razdd %e!e$ %% %d!5d$``` |

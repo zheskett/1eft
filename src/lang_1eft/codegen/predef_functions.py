@@ -176,11 +176,15 @@ def add_wr1tea_function(module: ir.Module) -> ir.Function:
     block = wri1tea.append_basic_block(name="entry")
     builder = ir.IRBuilder(block)
 
+    print(fmt_str)
+
     fmt_ptr = builder.gep(
         fmt_str,
         [ZERO, ZERO],
         inbounds=True,
     )
+
+    print(fmt_ptr)
     builder.call(printf_func, [fmt_ptr, wri1tea.args[0]])
     builder.ret_void()
     functions_with_void_ptrs[wri1tea.name] = [0]
